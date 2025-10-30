@@ -84,7 +84,7 @@ export default function Motos() {
             <textarea placeholder="Notas" value={formData.notas} onChange={(e) => setFormData({...formData, notas: e.target.value})} style={{ padding: '0.5rem', width: '100%', minHeight: '60px' }} />
           </div>
           <div style={{ gridColumn: 'span 3' }}>
-            <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>{editingId ? 'Actualizar' : 'Crear'}</button>
+            <button type="submit" style={{ padding: '0.5rem 1rem', background: '#f63b3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>{editingId ? 'Actualizar' : 'Crear'}</button>
             {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ cliente_id: '', modelo_id: '', placa: '', vin: '', anio: '', cilindraje_cc: '', color: '', kilometraje_km: '', ultima_revision: '', notas: '' }); }} style={{ marginLeft: '0.5rem', padding: '0.5rem 1rem' }}>Cancelar</button>}
           </div>
         </form>

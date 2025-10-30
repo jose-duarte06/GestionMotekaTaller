@@ -64,7 +64,7 @@ export default function Modelos() {
             {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
           </select>
           <input type="text" placeholder="Nombre modelo" value={nombre} onChange={(e) => setNombre(e.target.value)} required style={{ padding: '0.5rem', width: '200px' }} />
-          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#f63b3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
             {editingId ? 'Actualizar' : 'Crear'}
           </button>
           {editingId && <button type="button" onClick={() => { setEditingId(null); setNombre(''); setMarcaId(''); }}>Cancelar</button>}

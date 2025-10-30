@@ -7,7 +7,7 @@ export default function PublicLayout() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)'
+      background: 'radial-gradient(circle at center, #3b1e1eff 0%, #2a0f0fff 100%)'
     }}>
       <Outlet />
     </div>

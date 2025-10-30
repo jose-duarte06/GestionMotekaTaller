@@ -52,7 +52,7 @@ export default function Clientes() {
           <input type="email" placeholder="Correo" value={formData.correo} onChange={(e) => setFormData({...formData, correo: e.target.value})} style={{ padding: '0.5rem' }} />
           <input type="text" placeholder="Dirección" value={formData.direccion} onChange={(e) => setFormData({...formData, direccion: e.target.value})} style={{ padding: '0.5rem' }} />
           <div style={{ gridColumn: 'span 2' }}>
-            <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>{editingId ? 'Actualizar' : 'Crear'}</button>
+            <button type="submit" style={{ padding: '0.5rem 1rem', background: '#f63b3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>{editingId ? 'Actualizar' : 'Crear'}</button>
             {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ nombre: '', telefono: '', correo: '', direccion: '' }); }} style={{ marginLeft: '0.5rem', padding: '0.5rem 1rem' }}>Cancelar</button>}
           </div>
         </form>

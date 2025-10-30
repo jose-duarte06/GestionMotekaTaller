@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import { setSession } from '@/lib/auth';
 import '../diseños CSS/login.css';
+import logo from '@/imagenes/logo.png';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1 className="login-title">MOTEKA</h1>
+      <img src={logo} alt="Moteka" className="login-logo" />
         <form className="login-form" onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
           

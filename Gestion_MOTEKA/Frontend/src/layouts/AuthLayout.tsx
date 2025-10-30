@@ -14,7 +14,7 @@ export default function AuthLayout() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{
-        backgroundColor: '#1e293b',
+        backgroundColor: '#3b1e1eff',
         color: 'white',
         padding: '1rem 2rem',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
@@ -31,7 +31,7 @@ export default function AuthLayout() {
             <Link to="/clientes" style={{ color: 'white', textDecoration: 'none' }}>Clientes</Link>
             <Link to="/motos" style={{ color: 'white', textDecoration: 'none' }}>Motocicletas</Link>
             <Link to="/ordenes" style={{ color: 'white', textDecoration: 'none' }}>Órdenes</Link>
-            <div style={{ borderLeft: '1px solid #475569', paddingLeft: '1.5rem' }}>
+            <div style={{ borderLeft: '1px solid #694747ff', paddingLeft: '1.5rem' }}>
               <span style={{ marginRight: '1rem' }}>{user?.usuario}</span>
               <button
                 onClick={handleLogout}

@@ -59,7 +59,7 @@ export default function Marcas() {
             required
             style={{ padding: '0.5rem', marginRight: '1rem', width: '300px' }}
           />
-          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#f63b3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
             {editingId ? 'Actualizar' : 'Crear'}
           </button>
           {editingId && (

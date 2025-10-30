@@ -10,6 +10,7 @@ import Clientes from '@/pages/Clientes';
 import Motos from '@/pages/Motos';
 import Ordenes from '@/pages/Ordenes';
 
+
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
     ]
   },
   {
+    
     element: <RequireAuth><AuthLayout /></RequireAuth>,
     children: [
       {

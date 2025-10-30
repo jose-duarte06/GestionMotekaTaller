@@ -72,7 +72,7 @@ SEED_ADMIN_PASS=admin123
 ### 3. Crear Base de Datos
 
 ```bash
-# Desde psql o tu cliente PostgreSQL favorito
+# Desde psql o tu cliente PostgreSQL
 createdb moteka_db
 ```
 

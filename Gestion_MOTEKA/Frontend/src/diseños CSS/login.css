@@ -1,13 +1,21 @@
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+/* Fondo global (opcional) */
+body {
+  background: #000;
 }
 
+/* Contenedor principal */
+.login-container {
+  min-height: 100vh;
+  display: flex;                 /* centrado con flex */
+  align-items: center;
+  justify-content: center;
+  background-color: #000;        /* 👈 negro sólido */
+  background-image: none;        /* sin imagen */
+}
+
+/* Tarjeta */
 .login-card {
-  background: #1e293b;
+  background: #750e0e;
   padding: 3rem;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -16,13 +24,15 @@
   color: white;
 }
 
+/* Título */
 .login-title {
   text-align: center;
   font-size: 2rem;
   margin-bottom: 2rem;
-  color: #3b82f6;
+  color: #f63b3b;
 }
 
+/* Formulario */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -42,16 +52,16 @@
 
 .form-input {
   padding: 0.75rem;
-  border: 1px solid #475569;
+  border: 1px solid #694747;
   border-radius: 6px;
-  background: #0f172a;
+  background: #2a0f0f;
   color: white;
   font-size: 1rem;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #f63b3b;
 }
 
 .form-checkbox {
@@ -61,9 +71,10 @@
   font-size: 0.9rem;
 }
 
+/* Botón */
 .login-button {
   padding: 0.75rem;
-  background: #3b82f6;
+  background: #f63b3b;
   color: white;
   border: none;
   border-radius: 6px;
@@ -74,13 +85,46 @@
 }
 
 .login-button:hover {
-  background: #2563eb;
+  background: #eb2525;
 }
 
+/* Error */
 .error-message {
   background: #dc2626;
   color: white;
   padding: 0.75rem;
   border-radius: 6px;
   font-size: 0.9rem;
+}
+
+/* Logo */
+.login-logo{
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  margin: 0 auto 12px;
+  display: block;
+}
+
+/* (Opcional) helper que no usas ahora */
+.fondo{
+  background-color: rgb(209, 209, 209);
+}
+
+/* --- Forzar negro en toda la pantalla --- */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: #000 !important;   /* cuerpo negro */
+}
+
+/* Hacer que el contenedor cubra 100% del viewport */
+.login-container {
+  position: fixed;   /* ocupa toda la ventana */
+  inset: 0;          /* top/right/bottom/left = 0 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000 !important;    /* sin imagen ni gradiente */
+  background-image: none !important;
 }

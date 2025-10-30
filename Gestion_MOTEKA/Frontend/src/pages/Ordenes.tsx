@@ -110,7 +110,7 @@ export default function Ordenes() {
             {motos.map(m => <option key={m.id} value={m.id}>{m.placa || m.vin || `Moto ${m.id}`} - {m.marca?.nombre} {m.modelo?.nombre}</option>)}
           </select>
           <input type="text" placeholder="Observaciones" value={observaciones} onChange={(e) => setObservaciones(e.target.value)} style={{ padding: '0.5rem', flex: '2', minWidth: '200px' }} />
-          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Crear Orden</button>
+          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#f63b3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Crear Orden</button>
         </form>
         
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
