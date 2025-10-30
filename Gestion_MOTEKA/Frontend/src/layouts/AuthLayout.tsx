@@ -14,25 +14,38 @@ export default function AuthLayout() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{
-        backgroundColor: '#3b1e1eff',
+        backgroundColor: '#3b1e1e',
         color: 'white',
         padding: '1rem 2rem',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: '1rem' }}>
+          
+          {/* marca / logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <AppIcon />
-            <h1 style={{ margin: 0, fontSize: '1.5rem' }}>MOTEKA</h1>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', lineHeight: 1, fontWeight: 600, color: '#fff' }}>
+              MOTEKA
+            </h1>
           </div>
-          <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+
+          {/* nav */}
+          <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <Link to="/home" style={{ color: 'white', textDecoration: 'none' }}>Inicio</Link>
             <Link to="/marcas" style={{ color: 'white', textDecoration: 'none' }}>Marcas</Link>
             <Link to="/modelos" style={{ color: 'white', textDecoration: 'none' }}>Modelos</Link>
             <Link to="/clientes" style={{ color: 'white', textDecoration: 'none' }}>Clientes</Link>
             <Link to="/motos" style={{ color: 'white', textDecoration: 'none' }}>Motocicletas</Link>
             <Link to="/ordenes" style={{ color: 'white', textDecoration: 'none' }}>Órdenes</Link>
-            <div style={{ borderLeft: '1px solid #694747ff', paddingLeft: '1.5rem' }}>
-              <span style={{ marginRight: '1rem' }}>{user?.usuario}</span>
+
+            {hasRole('gerente') && (
+              <Link to="/usuarios" style={{ color: 'white', textDecoration: 'none' }}>Usuarios</Link>
+            )}
+
+            <div style={{ borderLeft: '1px solid #694747', paddingLeft: '1.5rem', display:'flex', alignItems:'center', gap:'0.75rem' }}>
+              <span style={{ fontSize: '0.9rem', color:'#fff' }}>
+                {user?.usuario} <span style={{ opacity:0.7 }}>({user?.rol})</span>
+              </span>
               <button
                 onClick={handleLogout}
                 style={{
@@ -41,7 +54,8 @@ export default function AuthLayout() {
                   border: 'none',
                   padding: '0.5rem 1rem',
                   borderRadius: '4px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
                 }}
               >
                 Salir
@@ -50,6 +64,7 @@ export default function AuthLayout() {
           </nav>
         </div>
       </header>
+
       <main style={{ flex: 1, padding: '2rem', backgroundColor: '#f1f5f9' }}>
         <Outlet />
       </main>

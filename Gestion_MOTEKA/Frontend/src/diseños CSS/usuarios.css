@@ -1,0 +1,140 @@
+.usuarios-wrapper {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: minmax(320px, 400px) 1fr;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .usuarios-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+.usuarios-card {
+    background-color: #fff;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+    padding: 1.5rem 2rem;
+}
+
+.usuarios-titulo {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.usuarios-desc {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.4;
+}
+
+.usuarios-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.usuarios-ok {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.usuarios-info {
+    font-size: 0.9rem;
+    color: #444;
+    margin-bottom: 1rem;
+}
+
+.usuarios-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.usuarios-field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.usuarios-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #222;
+}
+
+.usuarios-input {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #111;
+    font-size: 0.95rem;
+    line-height: 1.2rem;
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+}
+
+.usuarios-input:focus {
+    outline: 2px solid #3b1e1e;
+    outline-offset: 0;
+    border-color: #3b1e1e;
+}
+
+.usuarios-boton {
+    background-color: #3b1e1e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.usuarios-boton:hover {
+    background-color: #2a0f0f;
+}
+
+.usuarios-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    }
+
+.usuarios-tabla th {
+    text-align: left;
+    background-color: #f4f4f5;
+    font-weight: 600;
+    color: #111;
+    border-bottom: 1px solid #ddd;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.usuarios-tabla td {
+    border-bottom: 1px solid #eee;
+    color: #333;
+    padding: 0.6rem 0.75rem;
+    vertical-align: top;
+}
+
+.usuarios-vacio {
+    text-align: center;
+    color: #666;
+    padding: 1rem;
+    font-style: italic;
+}

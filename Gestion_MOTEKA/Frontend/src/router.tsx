@@ -9,6 +9,7 @@ import Modelos from '@/pages/Modelos';
 import Clientes from '@/pages/Clientes';
 import Motos from '@/pages/Motos';
 import Ordenes from '@/pages/Ordenes';
+import Usuarios from './pages/Usuarios';
 
 
 export const router = createBrowserRouter([
@@ -52,6 +53,10 @@ export const router = createBrowserRouter([
       {
         path: '/ordenes',
         element: <Ordenes />
+      },
+      {
+        path: '/usuarios',
+        element: <Usuarios />
       }
     ]
   }

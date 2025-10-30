@@ -9,6 +9,7 @@ from api.clientes_routes import clientes_bp
 from api.motos_routes import motos_bp
 from api.ordenes_routes import ordenes_bp
 from api.reportes_routes import reportes_bp
+from api.usuarios_routes import usuarios_bp
 
 def create_app():
     app = Flask(__name__)
@@ -18,10 +19,10 @@ def create_app():
     migrate.init_app(app, db)
     jwt.init_app(app)
     cors.init_app(app, 
-                  origins=app.config['CORS_ORIGINS'],
-                  supports_credentials=True,
-                  allow_headers=["Content-Type", "Authorization"],
-                  methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+                origins=app.config['CORS_ORIGINS'],
+                supports_credentials=True,
+                allow_headers=["Content-Type", "Authorization"],
+                methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(roles_bp)
@@ -31,6 +32,7 @@ def create_app():
     app.register_blueprint(motos_bp)
     app.register_blueprint(ordenes_bp)
     app.register_blueprint(reportes_bp)
+    app.register_blueprint(usuarios_bp)
     
     @app.route('/')
     def index():
@@ -45,7 +47,8 @@ def create_app():
                 "clientes": "/api/clientes",
                 "motocicletas": "/api/motocicletas",
                 "ordenes": "/api/ordenes",
-                "reportes": "/api/reportes"
+                "reportes": "/api/reportes",
+                "usuarios": "/api/usuarios"
             }
         }), 200
     
