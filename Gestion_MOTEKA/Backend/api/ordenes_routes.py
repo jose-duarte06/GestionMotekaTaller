@@ -180,21 +180,31 @@ def create_orden():
 @jwt_required()
 def cambiar_estado(id):
     """
+    Cambiar estado de una orden de trabajo.
     Reglas:
     - gerente / encargado -> pueden cambiar el estado a cualquiera, incluida CANCELADA.
     - mecanico:
         - solo si la orden le pertenece (mecanico_asignado_id == su empleado_id)
         - NO puede poner CANCELADA.
+    Además: si el cambio se hace con éxito, se intenta mandar correo al CLIENTE
+    avisándole del nuevo estado de SU moto.
     """
+
+    # import acá adentro para evitar ciclos raros de import
+    from core.email_utils import send_email
+
     orden = OrdenTrabajo.query.get(id)
     if not orden:
         return jsonify({"error": "Orden no encontrada"}), 404
 
     data = request.get_json() or {}
     estado_str = data.get('estado')
+    notas_cambio = data.get('notas', '')
+
     if not estado_str:
         return jsonify({"error": "El estado es requerido"}), 400
 
+    # validar estado
     try:
         nuevo_estado = EstadoOrdenEnum[estado_str]
     except KeyError:
@@ -205,41 +215,102 @@ def cambiar_estado(id):
     if not usuario:
         return jsonify({"error": "No se pudo identificar al usuario actual"}), 401
 
-    # validaciones de permiso según rol
+    # permisos según rol
     if rol == 'mecanico':
         # Debe ser el asignado
         if not empleado_id or orden.mecanico_asignado_id != empleado_id:
             return jsonify({"error": "No puede cambiar el estado de una orden que no le fue asignada"}), 403
 
-        # No le dejamos CANCELAR
+        # No puede CANCELAR
         if nuevo_estado == EstadoOrdenEnum.CANCELADA:
             return jsonify({"error": "No tiene permiso para cancelar la orden"}), 403
 
     elif rol in ['gerente', 'encargado']:
-        # gerente / encargado = todo bien, puede cualquier estado
+        # full access
         pass
     else:
         return jsonify({"error": "No tiene permisos para cambiar estado"}), 403
 
-    # aplicar cambio
+    # aplicar cambio en la orden
     orden.estado = nuevo_estado
 
-    # si finaliza / cancela, marcamos salida si no tenía
+    # si finaliza / cancela => marcamos salida si no tenía
     if nuevo_estado in [EstadoOrdenEnum.FINALIZADA, EstadoOrdenEnum.CANCELADA]:
         if not orden.fecha_salida:
             orden.fecha_salida = datetime.utcnow()
 
+    # guardamos historial
     historial = EstadoOrden(
         orden_id=orden.id,
         estado=nuevo_estado,
-        notas=data.get('notas', '')
+        notas=notas_cambio
     )
     db.session.add(historial)
 
     db.session.commit()
 
-    return jsonify(orden.to_dict(include_relations=True)), 200
+    # --------- correo al cliente ---------
+    try:
+        cli = Cliente.query.get(orden.cliente_id)
+        moto = Motocicleta.query.get(orden.motocicleta_id)
 
+        # ajustar esto a como se llama el campo en tu tabla Cliente
+        correo_cliente = getattr(cli, "email", None) or getattr(cli, "correo", None)
+
+        if correo_cliente:
+            # nombre del estado en bonito
+            titulo_estado = orden.estado.name.replace("_", " ").title()
+            # ej: EN_ESPERA -> "En Espera", FINALIZADA -> "Finalizada"
+
+            placa_txt = getattr(moto, "placa", "") or ""
+            modelo_txt = ""
+            # si tu modelo Motocicleta guarda marca/modelo como relaciones,
+            # podés construirlo acá. Si no, dejalo vacío y no pasa nada.
+
+            # armamos cuerpo legible para el cliente, SOLO su orden.
+            body_lines = [
+                f"Hola {cli.nombre},",
+                "",
+                f"Te informamos el estado de tu orden #{orden.id}: {titulo_estado}.",
+            ]
+
+            if orden.estado == EstadoOrdenEnum.FINALIZADA:
+                body_lines.append("Tu motocicleta ya está lista para entrega. ✅")
+
+            if orden.estado == EstadoOrdenEnum.CANCELADA:
+                body_lines.append("La orden fue cancelada. Si no reconoces esto, contáctanos.")
+
+            if placa_txt or modelo_txt:
+                body_lines.append("")
+                body_lines.append("Moto:")
+                if placa_txt:
+                    body_lines.append(f" - Placa: {placa_txt}")
+                if modelo_txt:
+                    body_lines.append(f" - Modelo: {modelo_txt}")
+
+            if notas_cambio:
+                body_lines.append("")
+                body_lines.append("Nota del taller:")
+                body_lines.append(notas_cambio)
+
+            body_lines.append("")
+            body_lines.append("Gracias por confiar en MOTEKA 🛠️")
+
+            cuerpo_cliente = "\n".join(body_lines)
+
+            send_email(
+                subject=f"Actualización de tu moto - Orden #{orden.id}",
+                body=cuerpo_cliente,
+                to_addr=correo_cliente
+            )
+        else:
+            print("[INFO] Cliente sin correo, no se envió notificación.")
+
+    except Exception as e:
+        # si el mail falla NO rompemos la API
+        print("[WARN] Falló envío de email al cliente:", e)
+
+    return jsonify(orden.to_dict(include_relations=True)), 200
 
 # =========================
 # GET /api/ordenes/<id>/historial
