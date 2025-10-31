@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required, get_jwt
 from core.extensions import db
 from core.auth import role_required
@@ -41,12 +41,12 @@ def crear_reporte_trabajo():
     Body JSON:
     {
         "orden_id": 123,
-        "descripcion": "Se cambió aceite..."
+        "descripcion": "Se cambió el kit de frenos..."
     }
 
     Reglas:
     - mecánico solo puede crear reporte si esa orden le pertenece (él es el mecanico_asignado).
-    - gerente / encargado pueden crear, PERO el reporte se guarda ligado al mecánico asignado a la orden.
+    - gerente / encargado pueden crear, PERO se guarda igual con el mecánico asignado a la orden.
     """
 
     data = request.get_json() or {}
@@ -64,9 +64,7 @@ def crear_reporte_trabajo():
     if not orden:
         return jsonify({"error": f"La orden {orden_id} no existe"}), 404
 
-    # ------------------------------------------
-    # Determinar el mecánico que vamos a guardar
-    # ------------------------------------------
+    # Determinar mecánico que se va a guardar en este reporte
     mecanico_final_id = None
     mecanico_final_nombre = None
 
@@ -81,8 +79,6 @@ def crear_reporte_trabajo():
 
     else:
         # gerente / encargado
-        # Ellos sí pueden reportar, pero el reporte debe quedar ligado
-        # al mecánico que está asignado a la orden.
         if not orden.mecanico_asignado_id:
             return jsonify({
                 "error": "La orden no tiene un mecánico asignado aún, no se puede crear reporte técnico"
@@ -106,7 +102,6 @@ def crear_reporte_trabajo():
         if getattr(moto.modelo, "marca", None):
             marca_nombre = moto.modelo.marca.nombre
 
-    # Creamos el registro del reporte
     nuevo_rep = ReporteTrabajo(
         orden_id=orden.id,
         mecanico_id=mecanico_final_id,
@@ -135,7 +130,6 @@ def crear_reporte_trabajo():
 def listar_reportes_trabajo():
     """
     Lista reportes técnicos de una orden específica.
-    Query param obligatorio:
     ?orden_id=123
 
     Reglas:
@@ -162,3 +156,61 @@ def listar_reportes_trabajo():
     data = [r.to_dict() for r in q.all()]
 
     return jsonify(data), 200
+
+
+@reportes_trabajo_bp.route('/export', methods=['GET'])
+@jwt_required()
+@role_required("mecanico", "gerente", "encargado")
+def exportar_reportes_csv():
+    """
+    Descarga CSV de reportes técnicos.
+    Opcional:
+    ?mecanico_id=7   -> solo ese mecánico
+    Si no se manda mecanico_id -> todos.
+
+    Reglas:
+    - mecánico: solo puede exportar SUS reportes (ignoramos mecanico_id si manda otro)
+    - gerente/encargado: puede exportar cualquiera o todos
+    """
+
+    mecanico_id = request.args.get("mecanico_id", type=int)
+
+    usuario, empleado_id, rol = _get_current_user_and_employee()
+    if not usuario:
+        return jsonify({"error": "No se pudo identificar al usuario actual"}), 401
+
+    q = ReporteTrabajo.query
+
+    if rol == "mecanico":
+        # forza a su propio id, ignore lo que pida
+        if not empleado_id:
+            return jsonify({"error": "No tiene empleado vinculado"}), 403
+        q = q.filter(ReporteTrabajo.mecanico_id == empleado_id)
+    else:
+        # gerente / encargado
+        if mecanico_id:
+            q = q.filter(ReporteTrabajo.mecanico_id == mecanico_id)
+
+    q = q.order_by(ReporteTrabajo.creado_en.asc()).all()
+
+    # armamos CSV manual
+    rows = [
+        "fecha_hora,mecanico,cliente,moto,descripcion,orden_id"
+    ]
+    for r in q:
+        fecha_str = r.creado_en.isoformat() if r.creado_en else ""
+        moto_txt = r.moto_placa or r.moto_vin or ""
+        desc_txt = (r.descripcion or "").replace("\n", " ").replace("\r", " ").strip()
+
+        line = f'"{fecha_str}","{r.mecanico_nombre or ""}","{r.cliente_nombre or ""}","{moto_txt}","{desc_txt}","{r.orden_id}"'
+        rows.append(line)
+
+    csv_data = "\n".join(rows)
+
+    return Response(
+        csv_data,
+        mimetype='text/csv',
+        headers={
+            "Content-Disposition": "attachment; filename=reportes_trabajo.csv"
+        }
+    )

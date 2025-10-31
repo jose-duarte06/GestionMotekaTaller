@@ -1,14 +1,37 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt
 from core.extensions import db
 from core.auth import role_required
 from models.ordenes import OrdenTrabajo, EstadoOrden, Pago, EstadoOrdenEnum, TipoPagoEnum
 from models.vehiculos import Motocicleta
-from models.personas import Cliente, Empleado
+from models.personas import Cliente, Empleado, Usuario
 from datetime import datetime
 from decimal import Decimal
 
 ordenes_bp = Blueprint('ordenes', __name__, url_prefix='/api/ordenes')
+
+
+def _get_current_user_ctx():
+    """
+    Lee el JWT y devuelve:
+    - usuario (row de Usuario)
+    - empleado_id (si el usuario está vinculado a un empleado)
+    - rol (string: 'mecanico', 'gerente', 'encargado', etc.)
+    """
+    claims = get_jwt()
+    data_user = claims.get("user") or {}
+    user_id = data_user.get("id")
+    rol = data_user.get("rol")
+
+    if not user_id:
+        return None, None, None
+
+    usuario = Usuario.query.get(user_id)
+    if not usuario:
+        return None, None, None
+
+    return usuario, usuario.empleado_id, rol
+
 
 @ordenes_bp.route('', methods=['GET'])
 @jwt_required()
@@ -66,14 +89,14 @@ def get_ordenes():
 
 @ordenes_bp.route('', methods=['POST'])
 @jwt_required()
-@role_required('gerente', 'encargado')  # 🔒 mecánico no crea orden directa
+@role_required('gerente', 'encargado')  # mecánico NO crea orden directa
 def create_orden():
     data = request.get_json() or {}
 
     cliente_id = data.get('cliente_id')
     motocicleta_id = data.get('motocicleta_id')
     observaciones = data.get('observaciones')
-    mecanico_id = data.get('mecanico_id')  # 👈 este viene del front
+    mecanico_id = data.get('mecanico_id')
 
     if not cliente_id or not motocicleta_id:
         return jsonify({"error": "cliente_id y motocicleta_id son requeridos"}), 400
@@ -97,7 +120,7 @@ def create_orden():
     nueva_orden = OrdenTrabajo(
         cliente_id=cliente_id,
         motocicleta_id=motocicleta_id,
-        mecanico_asignado_id=mecanico_id,  # 👈 guardamos acá
+        mecanico_asignado_id=mecanico_id,
         estado=EstadoOrdenEnum.EN_ESPERA,
         observaciones=observaciones
     )
@@ -119,8 +142,14 @@ def create_orden():
 
 @ordenes_bp.route('/<int:id>/estado', methods=['PATCH'])
 @jwt_required()
-@role_required('gerente', 'encargado')  # 🔒 mecánico no cambia estado
 def cambiar_estado(id):
+    """
+    Reglas:
+    - gerente / encargado -> pueden cambiar el estado a cualquiera, incluida CANCELADA.
+    - mecanico:
+        - solo si la orden le pertenece (mecanico_asignado_id == su empleado_id)
+        - NO puede poner CANCELADA.
+    """
     orden = OrdenTrabajo.query.get(id)
     if not orden:
         return jsonify({"error": "Orden no encontrada"}), 404
@@ -135,6 +164,28 @@ def cambiar_estado(id):
     except KeyError:
         return jsonify({"error": "Estado inválido"}), 400
 
+    # quién está logueado
+    usuario, empleado_id, rol = _get_current_user_ctx()
+    if not usuario:
+        return jsonify({"error": "No se pudo identificar al usuario actual"}), 401
+
+    # validaciones de permiso según rol
+    if rol == 'mecanico':
+        # Debe ser el asignado
+        if not empleado_id or orden.mecanico_asignado_id != empleado_id:
+            return jsonify({"error": "No puede cambiar el estado de una orden que no le fue asignada"}), 403
+
+        # No le dejamos CANCELAR
+        if nuevo_estado == EstadoOrdenEnum.CANCELADA:
+            return jsonify({"error": "No tiene permiso para cancelar la orden"}), 403
+
+    elif rol in ['gerente', 'encargado']:
+        # gerente / encargado = todo bien, puede cualquier estado
+        pass
+    else:
+        return jsonify({"error": "No tiene permisos para cambiar estado"}), 403
+
+    # aplicar cambio
     orden.estado = nuevo_estado
 
     # si finaliza / cancela, marcamos salida si no tenía
@@ -152,3 +203,17 @@ def cambiar_estado(id):
     db.session.commit()
 
     return jsonify(orden.to_dict(include_relations=True)), 200
+
+
+@ordenes_bp.route('/<int:id>/historial', methods=['GET'])
+@jwt_required()
+def historial_orden(id):
+    orden = OrdenTrabajo.query.get(id)
+    if not orden:
+        return jsonify({"error": "Orden no encontrada"}), 404
+
+    data = [
+        h.to_dict()
+        for h in orden.historial
+    ]
+    return jsonify(data), 200
