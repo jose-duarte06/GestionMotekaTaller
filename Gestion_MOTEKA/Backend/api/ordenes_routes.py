@@ -2,15 +2,24 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt
 from core.extensions import db
 from core.auth import role_required
-from models.ordenes import OrdenTrabajo, EstadoOrden, Pago, EstadoOrdenEnum, TipoPagoEnum
+from models.ordenes import (
+    OrdenTrabajo,
+    EstadoOrden,
+    Pago,
+    EstadoOrdenEnum,
+    TipoPagoEnum,
+)
 from models.vehiculos import Motocicleta
 from models.personas import Cliente, Empleado, Usuario
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 ordenes_bp = Blueprint('ordenes', __name__, url_prefix='/api/ordenes')
 
 
+# =========================
+# helper: usuario actual
+# =========================
 def _get_current_user_ctx():
     """
     Lee el JWT y devuelve:
@@ -33,19 +42,33 @@ def _get_current_user_ctx():
     return usuario, usuario.empleado_id, rol
 
 
+# =========================
+# GET /api/ordenes
+# listado + filtros
+# =========================
 @ordenes_bp.route('', methods=['GET'])
 @jwt_required()
 def get_ordenes():
     cliente_id = request.args.get('cliente_id', type=int)
     cliente_nombre = request.args.get('cliente_nombre', '').strip()
+
     motocicleta_id = request.args.get('motocicleta_id', type=int)
     mecanico_id = request.args.get('mecanico_id', type=int)
+
     estado = request.args.get('estado', '').strip()
     desde = request.args.get('desde', '').strip()
     hasta = request.args.get('hasta', '').strip()
     placa = request.args.get('placa', '').strip()
 
-    query = OrdenTrabajo.query.join(Cliente).join(Motocicleta).outerjoin(Empleado)
+    # base query
+    query = (
+        OrdenTrabajo.query
+        .join(Cliente)
+        .join(Motocicleta)
+        .outerjoin(Empleado)
+    )
+
+    # --- filtros dinámicos ---
 
     if cliente_id:
         query = query.filter(OrdenTrabajo.cliente_id == cliente_id)
@@ -60,33 +83,42 @@ def get_ordenes():
         query = query.filter(OrdenTrabajo.mecanico_asignado_id == mecanico_id)
 
     if estado:
+        # validamos que sea un estado válido del enum
         try:
             estado_enum = EstadoOrdenEnum[estado]
             query = query.filter(OrdenTrabajo.estado == estado_enum)
         except KeyError:
+            # si mandan algo raro lo ignoramos en vez de romper 💅
             pass
 
     if desde:
         try:
+            # quiero aceptar "2025-10-31T00:00:00Z"
             fecha_desde = datetime.fromisoformat(desde.replace('Z', '+00:00'))
             query = query.filter(OrdenTrabajo.fecha_ingreso >= fecha_desde)
-        except:
+        except Exception:
             pass
 
     if hasta:
         try:
             fecha_hasta = datetime.fromisoformat(hasta.replace('Z', '+00:00'))
             query = query.filter(OrdenTrabajo.fecha_ingreso <= fecha_hasta)
-        except:
+        except Exception:
             pass
 
     if placa:
         query = query.filter(Motocicleta.placa.ilike(f'%{placa}%'))
 
+    # orden más reciente primero
     ordenes = query.order_by(OrdenTrabajo.fecha_ingreso.desc()).all()
+
     return jsonify([o.to_dict(include_relations=True) for o in ordenes]), 200
 
 
+# =========================
+# POST /api/ordenes
+# crear orden nueva
+# =========================
 @ordenes_bp.route('', methods=['POST'])
 @jwt_required()
 @role_required('gerente', 'encargado')  # mecánico NO crea orden directa
@@ -126,7 +158,7 @@ def create_orden():
     )
 
     db.session.add(nueva_orden)
-    db.session.flush()
+    db.session.flush()  # para que ya tenga id
 
     estado_inicial = EstadoOrden(
         orden_id=nueva_orden.id,
@@ -140,6 +172,10 @@ def create_orden():
     return jsonify(nueva_orden.to_dict(include_relations=True)), 201
 
 
+# =========================
+# PATCH /api/ordenes/<id>/estado
+# cambiar estado con reglas de permiso
+# =========================
 @ordenes_bp.route('/<int:id>/estado', methods=['PATCH'])
 @jwt_required()
 def cambiar_estado(id):
@@ -205,6 +241,10 @@ def cambiar_estado(id):
     return jsonify(orden.to_dict(include_relations=True)), 200
 
 
+# =========================
+# GET /api/ordenes/<id>/historial
+# historial de estado
+# =========================
 @ordenes_bp.route('/<int:id>/historial', methods=['GET'])
 @jwt_required()
 def historial_orden(id):
@@ -212,8 +252,81 @@ def historial_orden(id):
     if not orden:
         return jsonify({"error": "Orden no encontrada"}), 404
 
-    data = [
-        h.to_dict()
-        for h in orden.historial
-    ]
+    data = [h.to_dict() for h in orden.historial]
     return jsonify(data), 200
+
+
+# =========================
+# GET /api/ordenes/dashboard_hoy
+# data rápida para dashboard
+# =========================
+@ordenes_bp.route('/dashboard_hoy', methods=['GET'])
+@jwt_required()
+@role_required('gerente', 'encargado', 'mecanico')
+def dashboard_hoy():
+    """
+    Devuelve:
+    - resumen de HOY por estado
+    - órdenes activas HOY (solo EN_ESPERA / EN_REPARACION)
+
+    Esto es útil para el dashboard frontal.
+    """
+    # rango hoy en UTC
+    now = datetime.utcnow()
+    start_today = datetime(now.year, now.month, now.day)
+    end_today = start_today + timedelta(days=1)
+
+    base_today = (
+        OrdenTrabajo.query
+        .filter(
+            OrdenTrabajo.fecha_ingreso >= start_today,
+            OrdenTrabajo.fecha_ingreso < end_today
+        )
+    )
+
+    total_hoy = base_today.count()
+    espera_hoy = base_today.filter(OrdenTrabajo.estado == EstadoOrdenEnum.EN_ESPERA).count()
+    reparacion_hoy = base_today.filter(OrdenTrabajo.estado == EstadoOrdenEnum.EN_REPARACION).count()
+    finalizadas_hoy = base_today.filter(OrdenTrabajo.estado == EstadoOrdenEnum.FINALIZADA).count()
+    canceladas_hoy = base_today.filter(OrdenTrabajo.estado == EstadoOrdenEnum.CANCELADA).count()
+
+    # órdenes activas hoy (pendientes en taller)
+    activas_rows = (
+        base_today
+        .filter(OrdenTrabajo.estado.in_([
+            EstadoOrdenEnum.EN_ESPERA,
+            EstadoOrdenEnum.EN_REPARACION
+        ]))
+        .order_by(OrdenTrabajo.fecha_ingreso.asc())
+        .all()
+    )
+
+    activas_data = []
+    for o in activas_rows:
+        activas_data.append({
+            "id": o.id,
+            "estado": o.estado.value if o.estado else None,
+            "fecha_ingreso": o.fecha_ingreso.isoformat() if o.fecha_ingreso else None,
+            "cliente": o.cliente.nombre if getattr(o, "cliente", None) else None,
+            "moto": (
+                o.motocicleta.placa
+                if getattr(o, "motocicleta", None) and o.motocicleta.placa
+                else (o.motocicleta.vin if getattr(o, "motocicleta", None) else None)
+            ),
+            "mecanico": (
+                o.mecanico_asignado.nombre
+                if getattr(o, "mecanico_asignado", None)
+                else "Sin asignar"
+            ),
+        })
+
+    return jsonify({
+        "resumen_hoy": {
+            "total": total_hoy,
+            "en_espera": espera_hoy,
+            "en_reparacion": reparacion_hoy,
+            "finalizadas": finalizadas_hoy,
+            "canceladas": canceladas_hoy,
+        },
+        "ordenes_activas_hoy": activas_data
+    }), 200

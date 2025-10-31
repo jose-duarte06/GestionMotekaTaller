@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import PublicLayout from '@/layouts/PublicLayout';
 import AuthLayout from '@/layouts/AuthLayout';
 import RequireAuth from '@/components/RequireAuth';
-import RequireRole from './components/RequiereRole';
+import RequireRole from '@/components/RequiereRole'; // ojo: ya lo tenías así
 import Login from '@/pages/Login';
 import Home from '@/pages/Home';
 import Marcas from '@/pages/Marcas';
@@ -10,8 +10,7 @@ import Modelos from '@/pages/Modelos';
 import Clientes from '@/pages/Clientes';
 import Motos from '@/pages/Motos';
 import Ordenes from '@/pages/Ordenes';
-import Usuarios from './pages/Usuarios';
-
+import Usuarios from '@/pages/Usuarios';
 
 export const router = createBrowserRouter([
   {
@@ -24,21 +23,69 @@ export const router = createBrowserRouter([
     ]
   },
   {
-    
-    element: <RequireAuth><AuthLayout /></RequireAuth>,
+    element: (
+      <RequireAuth>
+        <AuthLayout />
+      </RequireAuth>
+    ),
     children: [
-      {path: '/', element: <Home />},
-      {path: '/home', element: <Home />},
-      {path: '/marcas', element: <Marcas />},
-      {path: '/modelos', element: <Modelos />},
-      {path: '/clientes', element: <Clientes />},
-      {path: '/motos', element: <Motos />},
-      {path: '/ordenes', element: <Ordenes />},
-      {path: '/usuarios', element: (
-        <RequireRole allow={['gerente', 'encargado']}>
-          <Usuarios />
-        </RequireRole>
-      )}
+      // Home / dashboard -> todos los roles que pasen RequireAuth
+      { path: '/', element: <Home /> },
+      { path: '/home', element: <Home /> },
+
+      // Catálogos / administración
+      {
+        path: '/marcas',
+        element: (
+          <RequireRole allow={['gerente', 'encargado']}>
+            <Marcas />
+          </RequireRole>
+        )
+      },
+      {
+        path: '/modelos',
+        element: (
+          <RequireRole allow={['gerente', 'encargado']}>
+            <Modelos />
+          </RequireRole>
+        )
+      },
+      {
+        path: '/clientes',
+        element: (
+          <RequireRole allow={['gerente', 'encargado']}>
+            <Clientes />
+          </RequireRole>
+        )
+      },
+      {
+        path: '/motos',
+        element: (
+          <RequireRole allow={['gerente', 'encargado']}>
+            <Motos />
+          </RequireRole>
+        )
+      },
+
+      // Órdenes -> gerente / encargado / mecánico
+      {
+        path: '/ordenes',
+        element: (
+          <RequireRole allow={['gerente', 'encargado', 'mecanico']}>
+            <Ordenes />
+          </RequireRole>
+        )
+      },
+
+      // Usuarios -> solo jefe
+      {
+        path: '/usuarios',
+        element: (
+          <RequireRole allow={['gerente', 'encargado']}>
+            <Usuarios />
+          </RequireRole>
+        )
+      }
     ]
   }
 ]);

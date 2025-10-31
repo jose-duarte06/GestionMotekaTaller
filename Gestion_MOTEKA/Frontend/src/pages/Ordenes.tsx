@@ -14,6 +14,7 @@ export default function Ordenes() {
 
   const [observaciones, setObservaciones] = useState('');
   const [search, setSearch] = useState('');
+
   const [historialOrden, setHistorialOrden] = useState<any[]>([]);
   const [showHistorial, setShowHistorial] = useState(false);
 
@@ -35,6 +36,9 @@ export default function Ordenes() {
   const [nuevoMecanicoId, setNuevoMecanicoId] = useState<string>('');
   const [errorReasignar, setErrorReasignar] = useState<string>('');
 
+  // ---------- nuevo: exportar historial por cliente específico ----------
+  const [clienteExportId, setClienteExportId] = useState('');
+
   const currentUser = getUser(); // {id, usuario, rol, rol_id}
 
   const fetchOrdenes = async () => {
@@ -49,8 +53,8 @@ export default function Ordenes() {
 
   const fetchMotos = async (cId: string) => {
     if (!cId) {
-      setMotos([]);
-      return;
+        setMotos([]);
+        return;
     }
     const response = await api.get(`/api/motocicletas?cliente_id=${cId}`);
     setMotos(response.data);
@@ -101,6 +105,7 @@ export default function Ordenes() {
   const handleCambiarEstado = async (ordenId: number, nuevoEstado: string) => {
     try {
       await api.patch(`/api/ordenes/${ordenId}/estado`, { estado: nuevoEstado });
+      // acá en el backend ya debería estar el trigger de mandar correo al cliente cuando cambia estado
       fetchOrdenes();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error');
@@ -117,54 +122,52 @@ export default function Ordenes() {
     }
   };
 
-  const handleExportarOrdenes = async (formato: string) => {
+  // =========================
+  // NUEVO SISTEMA DE EXPORTES
+  // =========================
+  //
+  // Ya NO usamos CSV.
+  // Soporta:
+  //   - formato: 'xlsx' o 'pdf'
+  //   - onlyCliente?: si true, incluye cliente_id en query
+  //
+  // Backend esperado:
+  //   GET /api/reportes/ordenes?formato=pdf
+  //   GET /api/reportes/ordenes?formato=xlsx
+  //   GET /api/reportes/ordenes?formato=pdf&cliente_id=7
+  //
+  const handleExportar = async (formato: string, onlyCliente?: boolean) => {
     try {
-      const response = await api.get(`/api/reportes/ordenes?formato=${formato}`, {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `ordenes_trabajo.${formato}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err: any) {
-      alert('Error al exportar');
-    }
-  };
+      const params: any = { formato };
 
-  // NUEVO: exportar reportes técnicos CSV
-  const handleExportarReportes = async (soloMio: boolean) => {
-    try {
-      let finalUrl = '/api/reportes_trabajo/export';
-
-      // si el usuario es gerente/encargado y quiere "soloMio" podemos pasar mecanico_id manual
-      // si es mecánico, el backend ya va a forzar su propio ID ignore esto
-      if (soloMio && hasRole('gerente', 'encargado') && currentUser) {
-        // acá necesitaríamos saber cuál mecánico exportar,
-        // por ahora usamos que el admin exporta TODO SUYO no aplica,
-        // así que simplemente no le ponemos mecanico_id.
-        // (para MVP dejamos así. Si querés elegir mecánico de la lista,
-        //  después hacemos un select y pasamos ?mecanico_id=...)
+      // si pidió "solo este cliente", mandamos cliente_id
+      if (onlyCliente && clienteExportId) {
+        params.cliente_id = parseInt(clienteExportId);
       }
 
-      const response = await api.get(finalUrl, {
+      const response = await api.get('/api/reportes/ordenes', {
+        params,
         responseType: 'blob'
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
+
+      const baseName = onlyCliente
+        ? `historial_cliente_${clienteExportId || 'sin_id'}`
+        : 'ordenes_taller';
+
       link.href = url;
       link.setAttribute(
         'download',
-        soloMio ? 'mis_reportes.csv' : 'reportes_todos.csv'
+        `${baseName}.${formato === 'xlsx' ? 'xlsx' : 'pdf'}`
       );
+
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (err: any) {
-      alert('Error al exportar reportes');
+      alert(err.response?.data?.error || 'Error al exportar');
     }
   };
 
@@ -320,57 +323,115 @@ export default function Ordenes() {
             flexWrap: 'wrap',
             gap: '1rem',
             marginBottom: '1rem',
-            alignItems: 'center'
+            alignItems: 'flex-start'
           }}
         >
-          <input
-            type="text"
-            placeholder="Buscar por cliente..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ padding: '0.5rem', width: '250px' }}
-          />
-
-          {/* export órdenes (csv/xlsx/pdf) */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={() => handleExportarOrdenes('csv')}
-              style={{ padding: '0.5rem 1rem' }}
-            >
-              Órdenes CSV
-            </button>
-            <button
-              onClick={() => handleExportarOrdenes('xlsx')}
-              style={{ padding: '0.5rem 1rem' }}
-            >
-              Órdenes XLSX
-            </button>
-            <button
-              onClick={() => handleExportarOrdenes('pdf')}
-              style={{ padding: '0.5rem 1rem' }}
-            >
-              Órdenes PDF
-            </button>
+          {/* filtro para la tabla */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={{ fontSize: '0.8rem', color: '#444' }}>
+              Buscar en pantalla (por nombre de cliente)
+            </label>
+            <input
+              type="text"
+              placeholder="Ej: Juan Pérez"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ padding: '0.5rem', width: '250px' }}
+            />
           </div>
 
-          {/* export reportes técnicos */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={() => handleExportarReportes(true)}
-              style={{ padding: '0.5rem 1rem', background:'#d02a2aff', color:'#fff', border:'1px solid #000', borderRadius:'4px' }}
-            >
-              Mis reportes CSV
-            </button>
+          {/* selector y botones de historial por cliente */}
+          {hasRole('gerente', 'encargado') && (
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '220px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#444' }}>
+                Historial de este cliente
+              </label>
 
-            {hasRole('gerente', 'encargado') && (
-              <button
-                onClick={() => handleExportarReportes(false)}
-                style={{ padding: '0.5rem 1rem', background:'#444', color:'#fff', border:'1px solid #444', borderRadius:'4px' }}
+              <select
+                value={clienteExportId}
+                onChange={(e) => setClienteExportId(e.target.value)}
+                style={{ padding: '0.5rem', minWidth: '220px' }}
               >
-                Todos los reportes CSV
-              </button>
-            )}
-          </div>
+                <option value="">-- Seleccione cliente --</option>
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombre}
+                  </option>
+                ))}
+              </select>
+
+              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => handleExportar('xlsx', true)}
+                  disabled={!clienteExportId}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#111',
+                    color: 'white',
+                    border: '1px solid #000',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  XLSX cliente
+                </button>
+
+                <button
+                  onClick={() => handleExportar('pdf', true)}
+                  disabled={!clienteExportId}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#f63b3b',
+                    color: 'white',
+                    border: '1px solid #f63b3b',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  PDF cliente
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* export global taller */}
+          {hasRole('gerente', 'encargado') && (
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '220px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#444' }}>
+                Reporte global del taller
+              </label>
+
+              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => handleExportar('xlsx', false)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#111',
+                    color: 'white',
+                    border: '1px solid #000',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  XLSX global
+                </button>
+
+                <button
+                  onClick={() => handleExportar('pdf', false)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#f63b3b',
+                    color: 'white',
+                    border: '1px solid #f63b3b',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  PDF global
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* TABLA ORDENES */}
