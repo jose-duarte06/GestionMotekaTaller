@@ -16,7 +16,7 @@ export default function AuthLayout() {
       {/* HEADER / NAV */}
       <header
         style={{
-          backgroundColor: '#ba0000d3',
+          backgroundColor: '#ba0000d3', // <- rojo vino, no negro
           color: 'white',
           padding: '1rem 2rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
@@ -63,6 +63,16 @@ export default function AuthLayout() {
             {/* Siempre visible */}
             <NavItem to="/home" label="Inicio" />
 
+            {/* Órdenes: gerente / encargado / mecánico */}
+            {hasRole('gerente', 'encargado', 'mecanico') && (
+              <NavItem to="/ordenes" label="Órdenes" />
+            )}
+
+            {/* Herramientas: gerente / encargado / mecánico */}
+            {hasRole('gerente', 'encargado', 'mecanico') && (
+              <NavItem to="/herramientas" label="Herramientas" />
+            )}
+
             {/* Solo gerente / encargado */}
             {hasRole('gerente', 'encargado') && (
               <>
@@ -72,11 +82,6 @@ export default function AuthLayout() {
                 <NavItem to="/motos" label="Motocicletas" />
                 <NavItem to="/usuarios" label="Usuarios" />
               </>
-            )}
-
-            {/* Órdenes: gerente / encargado / mecánico */}
-            {hasRole('gerente', 'encargado', 'mecanico') && (
-              <NavItem to="/ordenes" label="Órdenes" />
             )}
 
             {/* Separador visual */}
@@ -106,7 +111,7 @@ export default function AuthLayout() {
               <button
                 onClick={handleLogout}
                 style={{
-                  backgroundColor: '#581414ff',
+                  backgroundColor: '#581414ff', // botoncito vino oscuro
                   color: 'white',
                   border: 'none',
                   padding: '0.5rem 1rem',
@@ -127,7 +132,7 @@ export default function AuthLayout() {
         style={{
           flex: 1,
           padding: '2rem',
-          backgroundColor: '#f1f5f9',
+          backgroundColor: '#f1f5f9', // fondo gris claro del contenido
         }}
       >
         <Outlet />
@@ -136,7 +141,7 @@ export default function AuthLayout() {
   );
 }
 
-/* --- Mini componente para cada link del navbar --- */
+/* --- Link limpio del navbar --- */
 function NavItem({ to, label }: { to: string; label: string }) {
   return (
     <Link

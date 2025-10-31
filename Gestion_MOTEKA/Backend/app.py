@@ -13,6 +13,7 @@ from api.usuarios_routes import usuarios_bp
 from api.reportes_trabajo_routes import reportes_trabajo_bp
 from api.mecanicos_routes import mecanicos_bp
 from api.dashboard_routes import dashboard_bp
+from api.herramientas_routes import herramientas_bp
 
 def create_app():
     app = Flask(__name__)
@@ -39,6 +40,7 @@ def create_app():
     app.register_blueprint(reportes_trabajo_bp)
     app.register_blueprint(mecanicos_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(herramientas_bp)
     
     @app.route('/')
     def index():

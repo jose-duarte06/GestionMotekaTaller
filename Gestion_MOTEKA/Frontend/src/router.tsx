@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import PublicLayout from '@/layouts/PublicLayout';
 import AuthLayout from '@/layouts/AuthLayout';
 import RequireAuth from '@/components/RequireAuth';
-import RequireRole from '@/components/RequiereRole'; // ojo: ya lo tenías así
+import RequireRole from '@/components/RequiereRole';
 import Login from '@/pages/Login';
 import Home from '@/pages/Home';
 import Marcas from '@/pages/Marcas';
@@ -11,6 +11,7 @@ import Clientes from '@/pages/Clientes';
 import Motos from '@/pages/Motos';
 import Ordenes from '@/pages/Ordenes';
 import Usuarios from '@/pages/Usuarios';
+import Herramientas from './pages/Herramientas';
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       // Home / dashboard -> todos los roles que pasen RequireAuth
       { path: '/', element: <Home /> },
       { path: '/home', element: <Home /> },
+      { path: '/herramientas', element: <Herramientas/>},
 
       // Catálogos / administración
       {
