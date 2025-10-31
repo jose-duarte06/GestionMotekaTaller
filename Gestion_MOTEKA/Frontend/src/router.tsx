@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import PublicLayout from '@/layouts/PublicLayout';
 import AuthLayout from '@/layouts/AuthLayout';
 import RequireAuth from '@/components/RequireAuth';
+import RequireRole from './components/RequiereRole';
 import Login from '@/pages/Login';
 import Home from '@/pages/Home';
 import Marcas from '@/pages/Marcas';
@@ -26,38 +27,18 @@ export const router = createBrowserRouter([
     
     element: <RequireAuth><AuthLayout /></RequireAuth>,
     children: [
-      {
-        path: '/',
-        element: <Home />
-      },
-      {
-        path: '/home',
-        element: <Home />
-      },
-      {
-        path: '/marcas',
-        element: <Marcas />
-      },
-      {
-        path: '/modelos',
-        element: <Modelos />
-      },
-      {
-        path: '/clientes',
-        element: <Clientes />
-      },
-      {
-        path: '/motos',
-        element: <Motos />
-      },
-      {
-        path: '/ordenes',
-        element: <Ordenes />
-      },
-      {
-        path: '/usuarios',
-        element: <Usuarios />
-      }
+      {path: '/', element: <Home />},
+      {path: '/home', element: <Home />},
+      {path: '/marcas', element: <Marcas />},
+      {path: '/modelos', element: <Modelos />},
+      {path: '/clientes', element: <Clientes />},
+      {path: '/motos', element: <Motos />},
+      {path: '/ordenes', element: <Ordenes />},
+      {path: '/usuarios', element: (
+        <RequireRole allow={['gerente', 'encargado']}>
+          <Usuarios />
+        </RequireRole>
+      )}
     ]
   }
 ]);

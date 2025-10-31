@@ -97,7 +97,7 @@ def generar_csv(ordenes):
     
     writer = csv.writer(output)
     writer.writerow(['ID', 'Cliente', 'Motocicleta (Placa)', 'Marca', 'Modelo', 'Estado', 
-                     'Mecánico', 'Fecha Ingreso', 'Fecha Salida', 'Observaciones'])
+                    'Mecánico', 'Fecha Ingreso', 'Fecha Salida', 'Observaciones'])
     
     for orden in ordenes:
         moto = orden.motocicleta

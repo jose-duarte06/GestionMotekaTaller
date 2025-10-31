@@ -38,7 +38,7 @@ export default function AuthLayout() {
             <Link to="/motos" style={{ color: 'white', textDecoration: 'none' }}>Motocicletas</Link>
             <Link to="/ordenes" style={{ color: 'white', textDecoration: 'none' }}>Órdenes</Link>
 
-            {hasRole('gerente') && (
+            {hasRole('gerente', 'encargado') && (
               <Link to="/usuarios" style={{ color: 'white', textDecoration: 'none' }}>Usuarios</Link>
             )}
 

@@ -13,23 +13,40 @@ class TipoPagoEnum(enum.Enum):
     TARJETA = "TARJETA"
     TRANSFERENCIA = "TRANSFERENCIA"
 
+
 class OrdenTrabajo(db.Model):
     __tablename__ = 'ordenes_trabajo'
     
     id = db.Column(db.Integer, primary_key=True)
+
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
     motocicleta_id = db.Column(db.Integer, db.ForeignKey('motocicletas.id'), nullable=False)
+
+    # empleado asignado como mecánico responsable
     mecanico_asignado_id = db.Column(db.Integer, db.ForeignKey('empleados.id'), nullable=True)
+
     estado = db.Column(db.Enum(EstadoOrdenEnum), nullable=False, default=EstadoOrdenEnum.EN_ESPERA)
     fecha_ingreso = db.Column(db.DateTime, default=datetime.utcnow)
     fecha_salida = db.Column(db.DateTime, nullable=True)
     observaciones = db.Column(db.Text)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
     actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    historial = db.relationship('EstadoOrden', backref='orden', lazy=True, cascade='all, delete-orphan', order_by='EstadoOrden.creado_en')
-    pagos = db.relationship('Pago', backref='orden', lazy=True, cascade='all, delete-orphan')
-    
+
+    historial = db.relationship(
+        'EstadoOrden',
+        backref='orden',
+        lazy=True,
+        cascade='all, delete-orphan',
+        order_by='EstadoOrden.creado_en'
+    )
+
+    pagos = db.relationship(
+        'Pago',
+        backref='orden',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
+
     def to_dict(self, include_relations=True):
         data = {
             'id': self.id,
@@ -41,14 +58,21 @@ class OrdenTrabajo(db.Model):
             'fecha_salida': self.fecha_salida.isoformat() if self.fecha_salida else None,
             'observaciones': self.observaciones,
             'creado_en': self.creado_en.isoformat() if self.creado_en else None,
-            'actualizado_en': self.actualizado_en.isoformat() if self.actualizado_en else None
+            'actualizado_en': self.actualizado_en.isoformat() if self.actualizado_en else None,
+
+            # calidad de vida para UI
+            'mecanico_asignado_nombre': (
+                self.mecanico_asignado.nombre if getattr(self, "mecanico_asignado", None) else None
+            )
         }
-        
+
         if include_relations:
-            data['cliente'] = self.cliente.to_dict() if self.cliente else None
-            data['motocicleta'] = self.motocicleta.to_dict(include_relations=True) if self.motocicleta else None
-            data['mecanico_asignado'] = self.mecanico_asignado.to_dict() if self.mecanico_asignado else None
-        
+            data['cliente'] = self.cliente.to_dict() if getattr(self, "cliente", None) else None
+            data['motocicleta'] = (
+                self.motocicleta.to_dict(include_relations=True)
+                if getattr(self, "motocicleta", None) else None
+            )
+
         return data
 
 

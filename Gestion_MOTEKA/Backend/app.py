@@ -10,6 +10,8 @@ from api.motos_routes import motos_bp
 from api.ordenes_routes import ordenes_bp
 from api.reportes_routes import reportes_bp
 from api.usuarios_routes import usuarios_bp
+from api.reportes_trabajo_routes import reportes_trabajo_bp
+from api.mecanicos_routes import mecanicos_bp
 
 def create_app():
     app = Flask(__name__)
@@ -33,6 +35,8 @@ def create_app():
     app.register_blueprint(ordenes_bp)
     app.register_blueprint(reportes_bp)
     app.register_blueprint(usuarios_bp)
+    app.register_blueprint(reportes_trabajo_bp)
+    app.register_blueprint(mecanicos_bp)
     
     @app.route('/')
     def index():
@@ -48,7 +52,8 @@ def create_app():
                 "motocicletas": "/api/motocicletas",
                 "ordenes": "/api/ordenes",
                 "reportes": "/api/reportes",
-                "usuarios": "/api/usuarios"
+                "usuarios": "/api/usuarios",
+                "reportes_trabajo": "/api/reportes_trabajo"
             }
         }), 200
     
