@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { clearSession, getUser, hasRole } from '@/lib/auth';
-import AppIcon from '@/components/AppIcon';
+import logo from '@/imagenes/logo.png'; // <- usa el mismo logo del login
 
 export default function AuthLayout() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function AuthLayout() {
       {/* HEADER / NAV */}
       <header
         style={{
-          backgroundColor: '#ba0000d3', // <- rojo vino, no negro
+          backgroundColor: '#d30303fe',
           color: 'white',
           padding: '1rem 2rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
@@ -33,19 +33,47 @@ export default function AuthLayout() {
           }}
         >
           {/* Marca / logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <AppIcon />
-            <h1
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <img
+              src={logo}
+              alt="Moteka"
               style={{
-                margin: 0,
-                fontSize: '1.5rem',
-                lineHeight: 1,
-                fontWeight: 600,
+                width: '100px',
+                height: '50px',
+                borderRadius: '8px',
+                boxShadow: '0 0 10px rgba(0,0,0,0.6)',
+                backgroundColor: '#000', // por si tu PNG tiene fondo transparente
+                objectFit: 'cover',
+              }}
+            />
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                lineHeight: 1.2,
                 color: '#fff',
               }}
             >
-              MOTEKA
-            </h1>
+              <span
+                style={{
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  color: '#fff',
+                }}
+              >
+                MOTEKA
+              </span>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 400,
+                  color: '#eee',
+                }}
+              >
+                Taller de Motos
+              </span>
+            </div>
           </div>
 
           {/* NAV */}
@@ -111,7 +139,7 @@ export default function AuthLayout() {
               <button
                 onClick={handleLogout}
                 style={{
-                  backgroundColor: '#581414ff', // botoncito vino oscuro
+                  backgroundColor: '#710707ff',
                   color: 'white',
                   border: 'none',
                   padding: '0.5rem 1rem',
@@ -132,7 +160,7 @@ export default function AuthLayout() {
         style={{
           flex: 1,
           padding: '2rem',
-          backgroundColor: '#f1f5f9', // fondo gris claro del contenido
+          backgroundColor: '#2e2e2eff',
         }}
       >
         <Outlet />
