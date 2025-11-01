@@ -124,58 +124,69 @@ El frontend estará disponible en `http://localhost:5173`
 ## Estructura del Proyecto
 
 ```
-Gestion_MOTEKA/
-├── Backend/
-│   ├── app.py                    # Aplicación Flask principal
-│   ├── requirements.txt          # Dependencias Python
-│   ├── .env                      # Variables de entorno
+gestion_moteka/
+├── backend/
+│   ├── app.py                  # Punto de entrada Flask
+│   ├── requirements.txt        # Dependencias Python
+│   ├── .env                    # Variables de entorno (local)
 │   ├── core/
-│   │   ├── config.py            # Configuración
-│   │   ├── extensions.py        # Extensiones Flask
-│   │   └── auth.py              # Decoradores de autenticación
+│   │   ├── config.py           # Configuración global
+│   │   ├── extensions.py       # DB, JWT, CORS, etc.
+│   │   └── auth.py             # Decoradores de autorización / require_role
 │   ├── models/
-│   │   ├── catalogos.py         # Marcas, Modelos, Roles
-│   │   ├── personas.py          # Clientes, Empleados, Usuarios
-│   │   ├── vehiculos.py         # Motocicletas
-│   │   └── ordenes.py           # Órdenes, Estados, Pagos
+│   │   ├── catalogos.py        # Marcas, Modelos, Roles
+│   │   ├── personas.py         # Clientes, Empleados, Usuarios
+│   │   ├── vehiculos.py        # Motocicletas
+│   │   └── ordenes.py          # Órdenes, Historial de estado, Pagos
 │   └── api/
-│       ├── auth_routes.py       # Rutas de autenticación
-│       ├── roles_routes.py      # CRUD de roles
-│       ├── marcas_routes.py     # CRUD de marcas
-│       ├── modelos_routes.py    # CRUD de modelos
-│       ├── clientes_routes.py   # CRUD de clientes
-│       ├── motos_routes.py      # CRUD de motocicletas
-│       ├── ordenes_routes.py    # Gestión de órdenes
-│       └── reportes_routes.py   # Exportación de reportes
-├── Frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   └── src/
-│       ├── main.tsx             # Punto de entrada
-│       ├── router.tsx           # Configuración de rutas
-│       ├── index.css            # Estilos globales
-│       ├── lib/
-│       │   ├── api.ts           # Cliente Axios
-│       │   └── auth.ts          # Utilidades de autenticación
-│       ├── components/
-│       │   ├── AppIcon.tsx
-│       │   └── RequireAuth.tsx
-│       ├── layouts/
-│       │   ├── PublicLayout.tsx
-│       │   └── AuthLayout.tsx
-│       ├── diseños CSS/
-│       │   └── login.css
-│       └── pages/
-│           ├── Login.tsx
-│           ├── Home.tsx
-│           ├── Marcas.tsx
-│           ├── Modelos.tsx
-│           ├── Clientes.tsx
-│           ├── Motos.tsx
-│           └── Ordenes.tsx
-└── README.md
+│       ├── auth_routes.py      # Login / perfil / creación inicial
+│       ├── roles_routes.py     # CRUD de roles (solo gerente)
+│       ├── marcas_routes.py    # CRUD de marcas
+│       ├── modelos_routes.py   # CRUD de modelos
+│       ├── clientes_routes.py  # CRUD de clientes
+│       ├── motos_routes.py     # CRUD de motocicletas
+│       ├── ordenes_routes.py   # Gestión de órdenes, cambios de estado
+│       └── reportes_routes.py  # Generación XLSX / PDF
+│
+└── frontend/
+    ├── index.html
+    ├── package.json
+    ├── vite.config.ts
+    ├── tsconfig.json
+    └── src/
+        ├── main.tsx            # Punto de arranque React
+        ├── router.tsx          # Rutas protegidas / públicas
+        ├── index.css           # Estilos globales
+        ├── lib/
+        │   ├── api.ts          # Axios base (usa VITE_API_URL)
+        │   └── auth.ts         # Manejo de token y roles en el cliente
+        ├── components/
+        │   ├── AppIcon.tsx
+        │   └── RequireAuth.tsx # Wrapper de protección por rol
+        ├── layouts/
+        │   ├── PublicLayout.tsx
+        │   └── AuthLayout.tsx  # Navbar rojo + contenido privado
+        ├── diseños CSS/
+        │   ├── login.css
+        │   ├── usuarios.css
+        │   ├── clientes.css
+        │   ├── herramientas.css
+        │   ├── home.css
+        │   ├── marcas.css
+        │   ├── modelos.css
+        │   ├── motos.css
+        │   └── ordenes.css
+        └── pages/
+            ├── Login.tsx
+            ├── Home.tsx
+            ├── Ordenes.tsx
+            ├── Herramientas.tsx
+            ├── Marcas.tsx
+            ├── Modelos.tsx
+            ├── Clientes.tsx
+            ├── Motos.tsx
+            └── Usuarios.tsx
+            
 ```
 
 ## API Endpoints
@@ -342,15 +353,7 @@ Registra un pago
 
 ```json
 {
-  "tipo": "EFECTIVO",
-  "monto": 150.50
-}
-```
 
-Tipos de pago:
-- `EFECTIVO`
-- `TARJETA`
-- `TRANSFERENCIA`
 
 #### DELETE /api/ordenes/:id [gerente/encargado]
 Elimina una orden (solo si no tiene pagos)
