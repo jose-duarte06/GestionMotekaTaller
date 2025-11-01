@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { hasRole } from "@/lib/auth";
+import "@/diseños CSS/herramientas.css";
 
 type Herramienta = {
     id: number;
@@ -12,7 +13,7 @@ type Herramienta = {
     marca_modelo: string;
     creado_en: string;
     actualizado_en: string;
-};
+    };
 
     export default function Herramientas() {
     const [lista, setLista] = useState<Herramienta[]>([]);
@@ -77,126 +78,97 @@ type Herramienta = {
         cargar();
     }, []);
 
+    // estados de carga / error con nuestro theme
     if (cargando) {
-        return <div style={{ color: "#000" }}>Cargando inventario...</div>;
+        return (
+        <div className="herrPageWrapper">
+            <div className="herrStatusText">Cargando inventario...</div>
+        </div>
+        );
     }
 
     if (error) {
-        return <div style={{ color: "crimson" }}>{error}</div>;
+        return (
+        <div className="herrPageWrapper">
+            <div className="herrStatusError">{error}</div>
+        </div>
+        );
     }
 
     return (
-        <div
-        style={{
-            backgroundColor: "#f1f5f9",
-            color: "#000",
-            padding: "1.5rem",
-            minHeight: "100vh",
-            borderRadius: "8px",
-        }}
-        >
-        <h1
-            style={{
-            color: "#181818ff",
-            marginBottom: "1rem",
-            fontWeight: 600,
-            }}
-        >
-            Inventario de Herramientas
-        </h1>
+        <div className="herrPageWrapper">
+        <h1 className="herrTitulo">Inventario de Herramientas</h1>
 
-        {/* FORMULARIO (solo gerente / encargado) */}
+        {/* FORM (solo gerente / encargado) */}
         {puedeEditar && (
-            <section
-            style={{
-                background: "#fff",
-                border: "1px solid #ffffffff",
-                borderRadius: "8px",
-                padding: "1rem 1rem 1.25rem",
-                marginBottom: "2rem",
-                boxShadow: "0 2px 6px rgba(0, 0, 0, 0)",
-            }}
-            >
-            <h2
-                style={{
-                marginTop: 0,
-                color: "#000",
-                fontSize: "1rem",
-                fontWeight: 600,
-                marginBottom: "0.75rem",
-                }}
-            >
-                Agregar herramienta
-            </h2>
+            <section className="herrPanel">
+            <h2 className="herrPanelTitle">Agregar herramienta</h2>
 
-            <form
-                onSubmit={crearHerramienta}
-                style={{
-                display: "grid",
-                gap: "0.75rem",
-                gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-                fontSize: "0.9rem",
-                color: "#000",
-                }}
-            >
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                <label style={labelStyle}>Nombre *</label>
+            <form className="herrForm" onSubmit={crearHerramienta}>
+                {/* Nombre */}
+                <div className="herrFieldGroup">
+                <label className="herrLabel">Nombre *</label>
                 <input
                     required
+                    className="herrInput"
                     value={form.nombre}
-                    onChange={(e) =>
-                    setForm({ ...form, nombre: e.target.value })
-                    }
-                    style={inputStyleLight}
                     placeholder="Gato hidráulico 2T"
+                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 />
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                <label style={labelStyle}>Marca / Modelo</label>
+                {/* Marca / Modelo */}
+                <div className="herrFieldGroup">
+                <label className="herrLabel">Marca / Modelo</label>
                 <input
+                    className="herrInput"
                     value={form.marca_modelo}
+                    placeholder="Truper / Makita..."
                     onChange={(e) =>
                     setForm({ ...form, marca_modelo: e.target.value })
                     }
-                    style={inputStyleLight}
-                    placeholder="Truper / Makita..."
                 />
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                <label style={labelStyle}>Cantidad</label>
+                {/* Cantidad */}
+                <div className="herrFieldGroup">
+                <label className="herrLabel">Cantidad</label>
                 <input
+                    className="herrInput"
                     type="number"
                     min={1}
                     value={form.cantidad}
                     onChange={(e) =>
-                    setForm({ ...form, cantidad: Number(e.target.value) })
+                    setForm({
+                        ...form,
+                        cantidad: Number(e.target.value),
+                    })
                     }
-                    style={inputStyleLight}
                 />
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                <label style={labelStyle}>Ubicación</label>
+                {/* Ubicación */}
+                <div className="herrFieldGroup">
+                <label className="herrLabel">Ubicación</label>
                 <input
+                    className="herrInput"
                     value={form.ubicacion}
+                    placeholder="Bahía 2 / Estante rojo / etc."
                     onChange={(e) =>
                     setForm({ ...form, ubicacion: e.target.value })
                     }
-                    style={inputStyleLight}
-                    placeholder="Bahía 2 / Estante rojo / etc."
                 />
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                <label style={labelStyle}>Estado</label>
+                {/* Estado */}
+                <div className="herrFieldGroup">
+                <label className="herrLabel">Estado</label>
                 <select
+                    className="herrInput"
                     value={form.estado}
                     onChange={(e) =>
                     setForm({ ...form, estado: e.target.value })
                     }
-                    style={inputStyleLight}
                 >
                     <option value="OPERATIVA">OPERATIVA</option>
                     <option value="EN_REPARACION">EN_REPARACION</option>
@@ -204,42 +176,22 @@ type Herramienta = {
                 </select>
                 </div>
 
-                <div
-                style={{
-                    gridColumn: "1 / -1",
-                    display: "flex",
-                    flexDirection: "column",
-                }}
-                >
-                <label style={labelStyle}>Descripción</label>
+                {/* Descripción */}
+                <div className="herrFieldGroup herrFieldWide">
+                <label className="herrLabel">Descripción</label>
                 <textarea
+                    className="herrTextarea"
                     value={form.descripcion}
+                    placeholder="Notas, daños, etc."
                     onChange={(e) =>
                     setForm({ ...form, descripcion: e.target.value })
                     }
-                    style={{
-                    ...inputStyleLight,
-                    minHeight: "60px",
-                    resize: "vertical",
-                    }}
-                    placeholder="Notas, daños, etc."
                 />
                 </div>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                <button
-                    type="submit"
-                    style={{
-                    backgroundColor: "#e90000ff",
-                    border: "none",
-                    color: "#f9f9f9ff",
-                    fontWeight: 600,
-                    padding: "0.6rem 1rem",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontSize: "0.9rem",
-                    }}
-                >
+                {/* Botón guardar */}
+                <div className="herrFieldWide">
+                <button type="submit" className="btnRojo">
                     Guardar herramienta
                 </button>
                 </div>
@@ -248,56 +200,31 @@ type Herramienta = {
         )}
 
         {/* LISTA */}
-        <section
-            style={{
-            background: "#fff",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            padding: "1rem",
-            boxShadow: "0 2px 6px rgba(255, 0, 0, 0.07)",
-            }}
-        >
-            <h2
-            style={{
-                color: "#000",
-                margin: 0,
-                marginBottom: "0.75rem",
-                fontSize: "1rem",
-                fontWeight: 600,
-            }}
-            >
-            Herramientas registradas
-            </h2>
+        <section className="herrPanel">
+            <h2 className="herrPanelTitle">Herramientas registradas</h2>
 
-            <div style={{ overflowX: "auto" }}>
-            <table
-                style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                minWidth: "800px",
-                color: "#000",
-                fontSize: "0.8rem",
-                }}
-            >
+            <div className="herrTablaScroll">
+            <table className="herrTabla">
                 <thead>
-                <tr style={{ background: "#afadc15f", color: "#000" }}>
-                    <th style={thStyleLight}>ID</th>
-                    <th style={thStyleLight}>Nombre</th>
-                    <th style={thStyleLight}>Marca/Modelo</th>
-                    <th style={thStyleLight}>Cant.</th>
-                    <th style={thStyleLight}>Estado</th>
-                    <th style={thStyleLight}>Ubicación</th>
-                    <th style={thStyleLight}>Notas</th>
-                    {puedeEditar && <th style={thStyleLight}>Acciones</th>}
+                <tr className="herrHeadRow">
+                    <th className="herrTh">ID</th>
+                    <th className="herrTh">Nombre</th>
+                    <th className="herrTh">Marca/Modelo</th>
+                    <th className="herrTh">Cant.</th>
+                    <th className="herrTh">Estado</th>
+                    <th className="herrTh">Ubicación</th>
+                    <th className="herrTh">Notas</th>
+                    {puedeEditar && <th className="herrTh">Acciones</th>}
                 </tr>
                 </thead>
 
                 <tbody>
                 {lista.length === 0 && (
-                    <tr>
+                    <tr className="herrBodyRow">
                     <td
-                        style={tdStyleLight}
+                        className="herrTd"
                         colSpan={puedeEditar ? 8 : 7}
+                        style={{ textAlign: "center", color: "#999" }}
                     >
                         Sin herramientas registradas
                     </td>
@@ -305,34 +232,20 @@ type Herramienta = {
                 )}
 
                 {lista.map((h) => (
-                    <tr
-                    key={h.id}
-                    style={{
-                        borderBottom: "1px solid #e5e7eb",
-                        backgroundColor: "#fff",
-                    }}
-                    >
-                    <td style={tdStyleLight}>{h.id}</td>
-                    <td style={tdStyleLight}>{h.nombre}</td>
-                    <td style={tdStyleLight}>{h.marca_modelo || "—"}</td>
-                    <td style={tdStyleLight}>{h.cantidad}</td>
-                    <td style={tdStyleLight}>{h.estado}</td>
-                    <td style={tdStyleLight}>{h.ubicacion || "—"}</td>
-                    <td style={tdStyleLight}>{h.descripcion || "—"}</td>
+                    <tr key={h.id} className="herrBodyRow">
+                    <td className="herrTd">{h.id}</td>
+                    <td className="herrTd">{h.nombre}</td>
+                    <td className="herrTd">{h.marca_modelo || "—"}</td>
+                    <td className="herrTd">{h.cantidad}</td>
+                    <td className="herrTd">{h.estado}</td>
+                    <td className="herrTd">{h.ubicacion || "—"}</td>
+                    <td className="herrTd">{h.descripcion || "—"}</td>
 
                     {puedeEditar && (
-                        <td style={tdStyleLight}>
+                        <td className="herrTd">
                         <button
+                            className="btnRojoChico"
                             onClick={() => eliminarHerramienta(h.id)}
-                            style={{
-                            backgroundColor: "#dc2626",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "4px",
-                            fontSize: "0.7rem",
-                            padding: "0.4rem 0.6rem",
-                            cursor: "pointer",
-                            }}
                         >
                             Eliminar
                         </button>
@@ -347,36 +260,3 @@ type Herramienta = {
         </div>
     );
     }
-
-/* estilos reutilizables */
-
-const labelStyle: React.CSSProperties = {
-    color: "#000",
-    fontWeight: 500,
-    marginBottom: "0.25rem",
-};
-
-const inputStyleLight: React.CSSProperties = {
-    backgroundColor: "#fff",
-    color: "#000",
-    border: "1px solid #d1d5db",
-    borderRadius: "4px",
-    padding: "0.5rem 0.6rem",
-    fontSize: "0.9rem",
-    outline: "none",
-    boxShadow: "0 0 0 rgba(0,0,0,0)",
-};
-
-const thStyleLight: React.CSSProperties = {
-    textAlign: "left",
-    padding: "0.5rem 0.75rem",
-    fontWeight: 600,
-    borderBottom: "1px solid #000",
-};
-
-const tdStyleLight: React.CSSProperties = {
-    padding: "0.5rem 0.75rem",
-    color: "#000",
-    verticalAlign: "top",
-    backgroundColor: "#fff",
-};

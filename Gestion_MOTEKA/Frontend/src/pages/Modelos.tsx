@@ -1,16 +1,24 @@
-import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
+import "@/diseños CSS/modelos.css";
 
 export default function Modelos() {
   const [modelos, setModelos] = useState<any[]>([]);
   const [marcas, setMarcas] = useState<any[]>([]);
-  const [nombre, setNombre] = useState('');
-  const [marcaId, setMarcaId] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [filterMarca, setFilterMarca] = useState('');
 
+  // form crear / editar
+  const [nombre, setNombre] = useState("");
+  const [marcaId, setMarcaId] = useState("");
+
+  // control edición
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // filtro tabla
+  const [filterMarca, setFilterMarca] = useState("");
+
+  // ===== fetch helpers =====
   const fetchMarcas = async () => {
-    const response = await api.get('/api/marcas');
+    const response = await api.get("/api/marcas");
     setMarcas(response.data);
   };
 
@@ -27,78 +35,181 @@ export default function Modelos() {
     fetchModelos();
   }, [filterMarca]);
 
+  // ===== crear / actualizar =====
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (editingId) {
-        await api.put(`/api/modelos/${editingId}`, { nombre, marca_id: parseInt(marcaId) });
+        await api.put(`/api/modelos/${editingId}`, {
+          nombre,
+          marca_id: parseInt(marcaId),
+        });
       } else {
-        await api.post('/api/modelos', { nombre, marca_id: parseInt(marcaId) });
+        await api.post("/api/modelos", {
+          nombre,
+          marca_id: parseInt(marcaId),
+        });
       }
-      setNombre('');
-      setMarcaId('');
+
+      // limpiar
+      setNombre("");
+      setMarcaId("");
       setEditingId(null);
+
       fetchModelos();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Error');
+      alert(err.response?.data?.error || "Error");
     }
   };
 
+  // ===== eliminar =====
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Eliminar modelo?')) return;
+    if (!confirm("¿Eliminar modelo?")) return;
     try {
       await api.delete(`/api/modelos/${id}`);
       fetchModelos();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Error');
+      alert(err.response?.data?.error || "Error");
     }
   };
 
+  // ===== preparar edición =====
+  const startEdit = (m: any) => {
+    setEditingId(m.id);
+    setNombre(m.nombre);
+    setMarcaId(String(m.marca_id));
+  };
+
+  // ===== cancelar edición =====
+  const cancelEdit = () => {
+    setEditingId(null);
+    setNombre("");
+    setMarcaId("");
+  };
+
   return (
-    <div>
-      <h1>Modelos de Motocicletas</h1>
-      <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', marginTop: '1rem' }}>
-        <form onSubmit={handleSubmit} style={{ marginBottom: '2rem', display: 'flex', gap: '1rem' }}>
-          <select value={marcaId} onChange={(e) => setMarcaId(e.target.value)} required style={{ padding: '0.5rem', width: '200px' }}>
-            <option value="">Seleccione marca</option>
-            {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-          </select>
-          <input type="text" placeholder="Nombre modelo" value={nombre} onChange={(e) => setNombre(e.target.value)} required style={{ padding: '0.5rem', width: '200px' }} />
-          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#f63b3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            {editingId ? 'Actualizar' : 'Crear'}
-          </button>
-          {editingId && <button type="button" onClick={() => { setEditingId(null); setNombre(''); setMarcaId(''); }}>Cancelar</button>}
+    <div className="modelosPageWrapper">
+      <h1 className="modelosTitulo">Modelos de Motocicletas</h1>
+
+      <section className="modelosPanel">
+        {/* ===== Form crear / editar ===== */}
+        <form className="modelosForm" onSubmit={handleSubmit}>
+          <div className="modelosFieldGroup">
+            <label className="modelosLabel">Marca *</label>
+            <select
+              className="modelosInput"
+              value={marcaId}
+              required
+              onChange={(e) => setMarcaId(e.target.value)}
+            >
+              <option value="">Seleccione marca</option>
+              {marcas.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="modelosFieldGroup">
+            <label className="modelosLabel">Nombre del modelo *</label>
+            <input
+              className="modelosInput"
+              type="text"
+              placeholder="Ej: CBR 600RR"
+              value={nombre}
+              required
+              onChange={(e) => setNombre(e.target.value)}
+            />
+          </div>
+
+          <div className="modelosButtonsRow">
+            <button type="submit" className="btnRojo">
+              {editingId ? "Actualizar" : "Crear"}
+            </button>
+
+            {editingId && (
+              <button
+                type="button"
+                className="btnGris"
+                onClick={cancelEdit}
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
         </form>
-        
-        <select value={filterMarca} onChange={(e) => setFilterMarca(e.target.value)} style={{ padding: '0.5rem', marginBottom: '1rem' }}>
-          <option value="">Todas las marcas</option>
-          {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-        </select>
-        
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f1f5f9' }}>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>Modelo</th>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>Marca</th>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {modelos.map((modelo) => (
-              <tr key={modelo.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '0.75rem' }}>{modelo.id}</td>
-                <td style={{ padding: '0.75rem' }}>{modelo.nombre}</td>
-                <td style={{ padding: '0.75rem' }}>{modelo.marca?.nombre}</td>
-                <td style={{ padding: '0.75rem' }}>
-                  <button onClick={() => { setEditingId(modelo.id); setNombre(modelo.nombre); setMarcaId(modelo.marca_id); }}>Editar</button>
-                  <button onClick={() => handleDelete(modelo.id)} style={{ marginLeft: '0.5rem', background: '#dc2626', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer' }}>Eliminar</button>
-                </td>
-              </tr>
+
+        {/* ===== Filtro por marca ===== */}
+        <div className="modelosSearchBlock">
+          <label className="modelosLabel">Filtrar por marca</label>
+          <select
+            className="modelosInput"
+            value={filterMarca}
+            onChange={(e) => setFilterMarca(e.target.value)}
+          >
+            <option value="">Todas las marcas</option>
+            {marcas.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.nombre}
+              </option>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </select>
+        </div>
+
+        {/* ===== Tabla ===== */}
+        <div className="modelosTablaScroll">
+          <table className="modelosTabla">
+            <thead>
+              <tr className="modelosHeadRow">
+                <th className="modelosTh">ID</th>
+                <th className="modelosTh">Modelo</th>
+                <th className="modelosTh">Marca</th>
+                <th className="modelosTh">Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {modelos.length === 0 && (
+                <tr className="modelosBodyRow">
+                  <td
+                    className="modelosTd"
+                    colSpan={4}
+                    style={{ textAlign: "center", color: "#aaa" }}
+                  >
+                    Sin resultados
+                  </td>
+                </tr>
+              )}
+
+              {modelos.map((modelo) => (
+                <tr key={modelo.id} className="modelosBodyRow">
+                  <td className="modelosTd">{modelo.id}</td>
+                  <td className="modelosTd">{modelo.nombre}</td>
+                  <td className="modelosTd">
+                    {modelo.marca?.nombre || "—"}
+                  </td>
+                  <td className="modelosTd accionesCell">
+                    <button
+                      className="btnNegroChico"
+                      onClick={() => startEdit(modelo)}
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      className="btnRojoChico"
+                      onClick={() => handleDelete(modelo.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

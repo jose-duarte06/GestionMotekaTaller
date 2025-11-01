@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
+import "@/diseños CSS/marcas.css";
 
 export default function Marcas() {
   const [marcas, setMarcas] = useState<any[]>([]);
-  const [nombre, setNombre] = useState('');
+  const [nombre, setNombre] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   const fetchMarcas = async () => {
     try {
@@ -26,79 +27,130 @@ export default function Marcas() {
       if (editingId) {
         await api.put(`/api/marcas/${editingId}`, { nombre });
       } else {
-        await api.post('/api/marcas', { nombre });
+        await api.post("/api/marcas", { nombre });
       }
-      setNombre('');
+
+      setNombre("");
       setEditingId(null);
       fetchMarcas();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Error');
+      alert(err.response?.data?.error || "Error");
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Eliminar marca?')) return;
+    if (!confirm("¿Eliminar marca?")) return;
     try {
       await api.delete(`/api/marcas/${id}`);
       fetchMarcas();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Error');
+      alert(err.response?.data?.error || "Error");
     }
   };
 
   return (
-    <div>
-      <h1>Marcas de Motocicletas</h1>
-      <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', marginTop: '1rem' }}>
-        <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
+    <div className="marcasPageWrapper">
+      <h1 className="marcasTitulo">Marcas de Motocicletas</h1>
+
+      <section className="marcasPanel">
+        {/* === Form crear / editar === */}
+        <form className="marcasForm" onSubmit={handleSubmit}>
+          <div className="marcasFieldGroup">
+            <label className="marcasLabel">Nombre de marca *</label>
+            <input
+              type="text"
+              className="marcasInput"
+              placeholder="Ej: Honda"
+              value={nombre}
+              required
+              onChange={(e) => setNombre(e.target.value)}
+            />
+          </div>
+
+          <div className="marcasButtonsRow">
+            <button type="submit" className="btnRojo">
+              {editingId ? "Actualizar" : "Crear"}
+            </button>
+
+            {editingId && (
+              <button
+                type="button"
+                className="btnGris"
+                onClick={() => {
+                  setEditingId(null);
+                  setNombre("");
+                }}
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
+        </form>
+
+        {/* === Buscador === */}
+        <div className="marcasSearchBlock">
+          <label className="marcasLabel">Buscar marca</label>
           <input
             type="text"
-            placeholder="Nombre de marca"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            required
-            style={{ padding: '0.5rem', marginRight: '1rem', width: '300px' }}
+            className="marcasInput"
+            placeholder="Buscar..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-          <button type="submit" style={{ padding: '0.5rem 1rem', background: '#f63b3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            {editingId ? 'Actualizar' : 'Crear'}
-          </button>
-          {editingId && (
-            <button type="button" onClick={() => { setEditingId(null); setNombre(''); }} style={{ marginLeft: '0.5rem', padding: '0.5rem 1rem' }}>
-              Cancelar
-            </button>
-          )}
-        </form>
-        
-        <input
-          type="text"
-          placeholder="Buscar..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: '0.5rem', marginBottom: '1rem', width: '300px' }}
-        />
-        
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f1f5f9' }}>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>Nombre</th>
-              <th style={{ padding: '0.75rem', textAlign: 'left' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {marcas.map((marca) => (
-              <tr key={marca.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '0.75rem' }}>{marca.id}</td>
-                <td style={{ padding: '0.75rem' }}>{marca.nombre}</td>
-                <td style={{ padding: '0.75rem' }}>
-                  <button onClick={() => { setEditingId(marca.id); setNombre(marca.nombre); }} style={{ marginRight: '0.5rem' }}>Editar</button>
-                  <button onClick={() => handleDelete(marca.id)} style={{ background: '#dc2626', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', cursor: 'pointer' }}>Eliminar</button>
-                </td>
+        </div>
+
+        {/* === Tabla === */}
+        <div className="marcasTablaScroll">
+          <table className="marcasTabla">
+            <thead>
+              <tr className="marcasHeadRow">
+                <th className="marcasTh">ID</th>
+                <th className="marcasTh">Nombre</th>
+                <th className="marcasTh">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+
+            <tbody>
+              {marcas.length === 0 && (
+                <tr className="marcasBodyRow">
+                  <td
+                    className="marcasTd"
+                    colSpan={3}
+                    style={{ textAlign: "center", color: "#aaa" }}
+                  >
+                    Sin resultados
+                  </td>
+                </tr>
+              )}
+
+              {marcas.map((marca) => (
+                <tr className="marcasBodyRow" key={marca.id}>
+                  <td className="marcasTd">{marca.id}</td>
+                  <td className="marcasTd">{marca.nombre}</td>
+                  <td className="marcasTd accionesCell">
+                    <button
+                      className="btnNegroChico"
+                      onClick={() => {
+                        setEditingId(marca.id);
+                        setNombre(marca.nombre);
+                      }}
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      className="btnRojoChico"
+                      onClick={() => handleDelete(marca.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

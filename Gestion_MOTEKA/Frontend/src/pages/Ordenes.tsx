@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { hasRole, getUser } from '../lib/auth';
+import { hasRole, getUser } from '@/lib/auth';
+import '@/diseños CSS/ordenes.css';
 
 export default function Ordenes() {
   const [ordenes, setOrdenes] = useState<any[]>([]);
@@ -18,28 +19,28 @@ export default function Ordenes() {
   const [historialOrden, setHistorialOrden] = useState<any[]>([]);
   const [showHistorial, setShowHistorial] = useState(false);
 
-  // ---------- estado para crear reporte técnico ----------
+  // Reporte técnico (crear)
   const [showReporteModal, setShowReporteModal] = useState(false);
   const [ordenParaReporte, setOrdenParaReporte] = useState<number | null>(null);
   const [textoReporte, setTextoReporte] = useState('');
   const [errorReporte, setErrorReporte] = useState('');
   const [guardandoReporte, setGuardandoReporte] = useState(false);
 
-  // ---------- ver reportes técnicos ----------
+  // Ver reportes técnicos
   const [showVerReportes, setShowVerReportes] = useState(false);
   const [ordenParaVerReportes, setOrdenParaVerReportes] = useState<number | null>(null);
   const [listaReportes, setListaReportes] = useState<any[]>([]);
   const [cargandoReportes, setCargandoReportes] = useState(false);
 
-  // ---------- futuro: reasignar mecánico (UI todavia no renderizada) ----------
+  // Reasignar mecánico (todavía sin UI completa)
   const [reasignandoOrdenId, setReasignandoOrdenId] = useState<number | null>(null);
   const [nuevoMecanicoId, setNuevoMecanicoId] = useState<string>('');
   const [errorReasignar, setErrorReasignar] = useState<string>('');
 
-  // ---------- nuevo: exportar historial por cliente específico ----------
+  // Exportar historial por cliente
   const [clienteExportId, setClienteExportId] = useState('');
 
-  const currentUser = getUser(); // {id, usuario, rol, rol_id}
+  const currentUser = getUser(); // por si lo ocupamos luego
 
   const fetchOrdenes = async () => {
     const response = await api.get(`/api/ordenes?cliente_nombre=${search}`);
@@ -53,8 +54,8 @@ export default function Ordenes() {
 
   const fetchMotos = async (cId: string) => {
     if (!cId) {
-        setMotos([]);
-        return;
+      setMotos([]);
+      return;
     }
     const response = await api.get(`/api/motocicletas?cliente_id=${cId}`);
     setMotos(response.data);
@@ -105,7 +106,7 @@ export default function Ordenes() {
   const handleCambiarEstado = async (ordenId: number, nuevoEstado: string) => {
     try {
       await api.patch(`/api/ordenes/${ordenId}/estado`, { estado: nuevoEstado });
-      // acá en el backend ya debería estar el trigger de mandar correo al cliente cuando cambia estado
+      // correo al cliente se dispara en backend
       fetchOrdenes();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error');
@@ -122,25 +123,10 @@ export default function Ordenes() {
     }
   };
 
-  // =========================
-  // NUEVO SISTEMA DE EXPORTES
-  // =========================
-  //
-  // Ya NO usamos CSV.
-  // Soporta:
-  //   - formato: 'xlsx' o 'pdf'
-  //   - onlyCliente?: si true, incluye cliente_id en query
-  //
-  // Backend esperado:
-  //   GET /api/reportes/ordenes?formato=pdf
-  //   GET /api/reportes/ordenes?formato=xlsx
-  //   GET /api/reportes/ordenes?formato=pdf&cliente_id=7
-  //
+  // EXPORTAR (xlsx/pdf) global o por cliente
   const handleExportar = async (formato: string, onlyCliente?: boolean) => {
     try {
       const params: any = { formato };
-
-      // si pidió "solo este cliente", mandamos cliente_id
       if (onlyCliente && clienteExportId) {
         params.cliente_id = parseInt(clienteExportId);
       }
@@ -171,7 +157,7 @@ export default function Ordenes() {
     }
   };
 
-  // ---------- abrir modal para crear reporte técnico ----------
+  // modal crear reporte técnico
   const abrirModalReporte = (ordenId: number) => {
     setOrdenParaReporte(ordenId);
     setTextoReporte('');
@@ -179,7 +165,6 @@ export default function Ordenes() {
     setShowReporteModal(true);
   };
 
-  // ---------- guardar reporte técnico ----------
   const guardarReporte = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ordenParaReporte) return;
@@ -206,7 +191,7 @@ export default function Ordenes() {
     }
   };
 
-  // ---------- ver lista de reportes de una orden ----------
+  // modal ver reportes técnicos
   const abrirVerReportes = async (ordenId: number) => {
     setOrdenParaVerReportes(ordenId);
     setShowVerReportes(true);
@@ -224,33 +209,26 @@ export default function Ordenes() {
     }
   };
 
-  // helper UI: ¿mostrar combo de estado editable?
+  // permisos de edición de estado
   const puedeEditarEstado = (orden: any) => {
-    // gerente / encargado siempre
     if (hasRole('gerente', 'encargado')) return true;
-
-    // mecánico puede intentar cambiarlo (backend valida si es suyo)
     if (hasRole('mecanico')) return true;
-
     return false;
   };
 
   return (
-    <div>
-      <h1>Órdenes de Trabajo</h1>
+    <div className="ordenesPageWrapper">
+      <h1 className="ordenesTitulo">Órdenes de Trabajo</h1>
 
-      <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', marginTop: '1rem' }}>
-        {/* FORM CREAR ORDEN */}
+      <div className="ordenesPanel">
+        {/* FORM CREAR ORDEN (solo gerente/encargado) */}
         {hasRole('gerente', 'encargado') && (
-          <form
-            onSubmit={handleSubmit}
-            style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}
-          >
+          <form className="ordenForm" onSubmit={handleSubmit}>
             <select
+              className="ordenInput"
               value={clienteId}
               onChange={(e) => setClienteId(e.target.value)}
               required
-              style={{ padding: '0.5rem', flex: '1', minWidth: '200px' }}
             >
               <option value="">Seleccione cliente*</option>
               {clientes.map((c) => (
@@ -261,11 +239,11 @@ export default function Ordenes() {
             </select>
 
             <select
+              className="ordenInput"
               value={motoId}
               onChange={(e) => setMotoId(e.target.value)}
               required
               disabled={!clienteId}
-              style={{ padding: '0.5rem', flex: '1', minWidth: '200px' }}
             >
               <option value="">Seleccione motocicleta*</option>
               {motos.map((m) => (
@@ -280,9 +258,9 @@ export default function Ordenes() {
             </select>
 
             <select
+              className="ordenInput"
               value={mecanicoId}
               onChange={(e) => setMecanicoId(e.target.value)}
-              style={{ padding: '0.5rem', flex: '1', minWidth: '200px' }}
             >
               <option value="">Asignar mecánico (opcional)</option>
               {mecanicos.map((m) => (
@@ -293,64 +271,42 @@ export default function Ordenes() {
             </select>
 
             <input
+              className="ordenInput"
               type="text"
               placeholder="Observaciones"
               value={observaciones}
               onChange={(e) => setObservaciones(e.target.value)}
-              style={{ padding: '0.5rem', flex: '2', minWidth: '200px' }}
             />
 
-            <button
-              type="submit"
-              style={{
-                padding: '0.5rem 1rem',
-                background: '#f63b3bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
+            <button className="btnRojo" type="submit">
               Crear Orden
             </button>
           </form>
         )}
 
         {/* FILTROS / EXPORTS */}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            marginBottom: '1rem',
-            alignItems: 'flex-start'
-          }}
-        >
-          {/* filtro para la tabla */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={{ fontSize: '0.8rem', color: '#444' }}>
-              Buscar en pantalla (por nombre de cliente)
-            </label>
+        <div className="filtrosWrapper">
+          {/* Buscar en tabla */}
+          <div className="filtroBloque">
+            <label className="filtroLabel">Buscar en pantalla (por nombre de cliente)</label>
             <input
+              className="ordenInput"
               type="text"
               placeholder="Ej: Juan Pérez"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ padding: '0.5rem', width: '250px' }}
             />
           </div>
 
-          {/* selector y botones de historial por cliente */}
+          {/* Exportes por cliente */}
           {hasRole('gerente', 'encargado') && (
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '220px' }}>
-              <label style={{ fontSize: '0.8rem', color: '#444' }}>
-                Historial de este cliente
-              </label>
+            <div className="filtroBloque">
+              <label className="filtroLabel">Historial de este cliente</label>
 
               <select
+                className="ordenInput"
                 value={clienteExportId}
                 onChange={(e) => setClienteExportId(e.target.value)}
-                style={{ padding: '0.5rem', minWidth: '220px' }}
               >
                 <option value="">-- Seleccione cliente --</option>
                 {clientes.map((c) => (
@@ -360,33 +316,19 @@ export default function Ordenes() {
                 ))}
               </select>
 
-              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div className="exportButtonsRow">
                 <button
+                  className="btnNegro"
                   onClick={() => handleExportar('xlsx', true)}
                   disabled={!clienteExportId}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#111',
-                    color: 'white',
-                    border: '1px solid #000',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
                 >
                   XLSX cliente
                 </button>
 
                 <button
+                  className="btnRojo"
                   onClick={() => handleExportar('pdf', true)}
                   disabled={!clienteExportId}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#f63b3b',
-                    color: 'white',
-                    border: '1px solid #f63b3b',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
                 >
                   PDF cliente
                 </button>
@@ -394,38 +336,22 @@ export default function Ordenes() {
             </div>
           )}
 
-          {/* export global taller */}
+          {/* Export global */}
           {hasRole('gerente', 'encargado') && (
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '220px' }}>
-              <label style={{ fontSize: '0.8rem', color: '#444' }}>
-                Reporte global del taller
-              </label>
+            <div className="filtroBloque">
+              <label className="filtroLabel">Reporte global del taller</label>
 
-              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div className="exportButtonsRow">
                 <button
+                  className="btnNegro"
                   onClick={() => handleExportar('xlsx', false)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#111',
-                    color: 'white',
-                    border: '1px solid #000',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
                 >
                   XLSX global
                 </button>
 
                 <button
+                  className="btnRojo"
                   onClick={() => handleExportar('pdf', false)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#f63b3b',
-                    color: 'white',
-                    border: '1px solid #f63b3b',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
                 >
                   PDF global
                 </button>
@@ -435,31 +361,31 @@ export default function Ordenes() {
         </div>
 
         {/* TABLA ORDENES */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+        <div className="tablaScroll">
+          <table className="ordenesTabla">
             <thead>
-              <tr style={{ background: '#ffffffff' }}>
-                <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
-                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Cliente</th>
-                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Placa</th>
-                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Estado</th>
-                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Fecha Ingreso</th>
-                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Acciones</th>
+              <tr className="ordenesHeadRow">
+                <th className="ordenesTh">ID</th>
+                <th className="ordenesTh">Cliente</th>
+                <th className="ordenesTh">Placa</th>
+                <th className="ordenesTh">Estado</th>
+                <th className="ordenesTh">Fecha Ingreso</th>
+                <th className="ordenesTh">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {ordenes.map((orden) => (
-                <tr key={orden.id} style={{ borderBottom: '1px solid #890000ff' }}>
-                  <td style={{ padding: '0.75rem' }}>{orden.id}</td>
-                  <td style={{ padding: '0.75rem' }}>{orden.cliente?.nombre}</td>
-                  <td style={{ padding: '0.75rem' }}>{orden.motocicleta?.placa || 'N/A'}</td>
+                <tr key={orden.id} className="ordenesBodyRow">
+                  <td className="ordenesTd">{orden.id}</td>
+                  <td className="ordenesTd">{orden.cliente?.nombre}</td>
+                  <td className="ordenesTd">{orden.motocicleta?.placa || 'N/A'}</td>
 
-                  <td style={{ padding: '0.75rem' }}>
+                  <td className="ordenesTd">
                     {puedeEditarEstado(orden) ? (
                       <select
+                        className="ordenEstadoSelect"
                         value={orden.estado}
                         onChange={(e) => handleCambiarEstado(orden.id, e.target.value)}
-                        style={{ padding: '0.25rem' }}
                       >
                         <option value="EN_ESPERA">EN_ESPERA</option>
                         <option value="EN_REPARACION">EN_REPARACION</option>
@@ -471,38 +397,24 @@ export default function Ordenes() {
                     )}
                   </td>
 
-                  <td style={{ padding: '0.75rem' }}>
+                  <td className="ordenesTd">
                     {orden.fecha_ingreso
                       ? new Date(orden.fecha_ingreso).toLocaleString()
                       : '—'}
                   </td>
 
-                  <td
-                    style={{
-                      padding: '0.75rem',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.5rem'
-                    }}
-                  >
+                  <td className="ordenesTd ordenAccionesCell">
                     <button
+                      className="btnChicoClaro"
                       onClick={() => handleVerHistorial(orden.id)}
-                      style={{ padding: '0.25rem 0.5rem' }}
                     >
                       Historial
                     </button>
 
                     {hasRole('mecanico', 'gerente', 'encargado') && (
                       <button
+                        className="btnNegroChico"
                         onClick={() => abrirModalReporte(orden.id)}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          background: '#111',
-                          color: 'white',
-                          border: '1px solid #000',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
                       >
                         Reporte
                       </button>
@@ -510,15 +422,8 @@ export default function Ordenes() {
 
                     {hasRole('mecanico', 'gerente', 'encargado') && (
                       <button
+                        className="btnGrisChico"
                         onClick={() => abrirVerReportes(orden.id)}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          background: '#444',
-                          color: 'white',
-                          border: '1px solid #444',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
                       >
                         Ver reportes
                       </button>
@@ -531,69 +436,39 @@ export default function Ordenes() {
         </div>
       </div>
 
-      {/* MODAL: Historial de estados */}
+      {/* MODAL HISTORIAL */}
       {showHistorial && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => setShowHistorial(false)}
-        >
+        <div className="modalOverlay" onClick={() => setShowHistorial(false)}>
           <div
-            style={{
-              background: 'white',
-              padding: '2rem',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              width: '90%'
-            }}
+            className="modalCard"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2>Historial de Estados</h2>
-            <table
-              style={{ width: '100%', marginTop: '1rem', borderCollapse: 'collapse' }}
-            >
+            <h2 className="modalTitle">Historial de Estados</h2>
+
+            <table className="histTabla">
               <thead>
-                <tr style={{ background: '#c33333ff' }}>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Estado</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Fecha</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Notas</th>
+                <tr className="histHeadRow">
+                  <th className="histTh">Estado</th>
+                  <th className="histTh">Fecha</th>
+                  <th className="histTh">Notas</th>
                 </tr>
               </thead>
               <tbody>
                 {historialOrden.map((h) => (
-                  <tr
-                    key={h.id}
-                    style={{ borderBottom: '1px solid #e2e8f0' }}
-                  >
-                    <td style={{ padding: '0.5rem' }}>{h.estado}</td>
-                    <td style={{ padding: '0.5rem' }}>
+                  <tr key={h.id} className="histBodyRow">
+                    <td className="histTd">{h.estado}</td>
+                    <td className="histTd">
                       {new Date(h.creado_en).toLocaleString()}
                     </td>
-                    <td style={{ padding: '0.5rem' }}>{h.notas}</td>
+                    <td className="histTd">{h.notas}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
             <button
+              className="btnRojo modalCloseBtn"
               onClick={() => setShowHistorial(false)}
-              style={{
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                background: '#f63b3bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
             >
               Cerrar
             </button>
@@ -601,60 +476,35 @@ export default function Ordenes() {
         </div>
       )}
 
-      {/* MODAL: Crear reporte técnico */}
+      {/* MODAL CREAR REPORTE */}
       {showReporteModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
+        <div className="modalOverlay">
           <div
-            style={{
-              background: 'white',
-              padding: '1.5rem',
-              borderRadius: '8px',
-              maxWidth: '500px',
-              width: '90%'
-            }}
+            className="modalCard"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2>Reporte técnico (Orden #{ordenParaReporte})</h2>
+            <h2 className="modalTitle">
+              Reporte técnico (Orden #{ordenParaReporte})
+            </h2>
+
             <form onSubmit={guardarReporte}>
-              <div style={{ marginTop: '1rem' }}>
-                <label>Descripción del trabajo realizado</label>
+              <div className="modalField">
+                <label className="modalLabel">Descripción del trabajo realizado</label>
                 <textarea
+                  className="modalTextarea"
                   value={textoReporte}
                   onChange={(e) => setTextoReporte(e.target.value)}
-                  style={{
-                    width: '100%',
-                    minHeight: '120px',
-                    resize: 'vertical',
-                    marginTop: '0.5rem'
-                  }}
                 />
               </div>
 
               {errorReporte && (
-                <div style={{ color: 'crimson', marginTop: '0.5rem' }}>
-                  {errorReporte}
-                </div>
+                <div className="modalError">{errorReporte}</div>
               )}
 
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '0.5rem',
-                  marginTop: '1rem'
-                }}
-              >
+              <div className="modalActions">
                 <button
                   type="button"
+                  className="btnChicoClaro"
                   onClick={() => {
                     setShowReporteModal(false);
                     setOrdenParaReporte(null);
@@ -663,16 +513,11 @@ export default function Ordenes() {
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
+                  className="btnNegro"
                   disabled={guardandoReporte}
-                  style={{
-                    background: '#111',
-                    color: '#fff',
-                    border: '1px solid #000',
-                    borderRadius: '4px',
-                    padding: '0.5rem 1rem'
-                  }}
                 >
                   {guardandoReporte ? 'Guardando…' : 'Guardar'}
                 </button>
@@ -682,99 +527,55 @@ export default function Ordenes() {
         </div>
       )}
 
-      {/* MODAL: Ver reportes técnicos */}
+      {/* MODAL VER REPORTES */}
       {showVerReportes && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => {
-            setShowVerReportes(false);
-          }}
+          className="modalOverlay"
+          onClick={() => setShowVerReportes(false)}
         >
           <div
-            style={{
-              background: 'white',
-              padding: '1.5rem',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              width: '90%',
-              maxHeight: '80vh',
-              overflowY: 'auto'
-            }}
+            className="modalCard modalCardScroll"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2>Reportes técnicos (Orden #{ordenParaVerReportes})</h2>
+            <h2 className="modalTitle">
+              Reportes técnicos (Orden #{ordenParaVerReportes})
+            </h2>
 
             {cargandoReportes ? (
-              <div style={{ marginTop: '1rem' }}>Cargando…</div>
+              <div className="modalLoading">Cargando…</div>
             ) : (
-              <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+              <div className="reportesLista">
                 {listaReportes.length === 0 && (
-                  <div style={{ color: '#666' }}>No hay reportes</div>
+                  <div className="reportesEmpty">No hay reportes</div>
                 )}
 
                 {listaReportes.map((r: any) => (
-                  <div
-                    key={r.id}
-                    style={{
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      padding: '0.75rem'
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: '#555',
-                        marginBottom: '0.5rem'
-                      }}
-                    >
+                  <div key={r.id} className="reporteItem">
+                    <div className="reporteMeta">
                       <b>{r.mecanico_nombre || '—'}</b> |{' '}
                       {new Date(r.creado_en).toLocaleString()}
                     </div>
 
-                    <div style={{ whiteSpace: 'pre-wrap' }}>
+                    <div className="reporteDescripcion">
                       {r.descripcion}
                     </div>
 
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: '#777',
-                        marginTop: '0.5rem'
-                      }}
-                    >
+                    <div className="reporteInfoExtra">
                       Cliente: {r.cliente_nombre || '—'}
                       <br />
                       Moto: {r.moto_placa || r.moto_vin || '—'}
                       <br />
-                      Modelo/Marca: {r.modelo_nombre || '—'} /{' '}
-                      {r.marca_nombre || '—'}
+                      Modelo/Marca: {r.modelo_nombre || '—'} / {r.marca_nombre || '—'}
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            <div style={{ textAlign: 'right', marginTop: '1rem' }}>
+            <div className="modalActionsRight">
               <button
-                onClick={() => {
-                  setShowVerReportes(false);
-                }}
-                style={{
-                  background: '#f63b3bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  padding: '0.5rem 1rem'
-                }}
+                className="btnRojo"
+                onClick={() => setShowVerReportes(false)}
               >
                 Cerrar
               </button>
@@ -782,6 +583,7 @@ export default function Ordenes() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
